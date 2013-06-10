@@ -52,9 +52,6 @@ void bayesfit(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *nf,
 	}
 	
   //PARAMETERS FOR MCMC
-  //int semente = *SEMENTE;	/* seed */
-  //if (screen != 0) Rprintf("The seed has been deprecated=%d\n",semente);
-  //srand48(semente);
   // To get the RNG state from R when this C fuction is call from R
   GetRNGstate();
 	
@@ -88,37 +85,29 @@ void bayesfit(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *nf,
 
   double ll, llaux, lp, lpaux; // to compute acceptance ratio
   double ltarget;
-//  double ltargetaux;
-//  double tmp;
 
   int i,j,state,r;  /* iterators */
-//  double quad;
 
   /* this is for the lapack calls */
   char uplo[]="U"; /* it means we are feeding the routine with the 
 		      upper triangle */
   char trans[]="T";/* it means we want to solve the system with the 
 		      transpose of the matrix we are feeding it */
-//  char diag[]="N"; /* means our matrix is not unit-triangular */
   int info; /* returns sucess status */
 
   double onedouble=1.;
-//  double minusone=-1.;
   double zero=0.;
 
-  FILE *fF, *fcal;
-//  FILE *faux;
-	
-
   // FILENAMES
+  FILE *fF, *fcal;
   char *fileF; /* file where sequence of thetaF goes */
   char *filepath; /* file where sequence of (yM*,b) goes */
   char *fileU; /* file where the sequence of ustars goes */
   char *frateU; /* and its acceptance rate */	
-  int pcont;   /* number of controllable inputs */
 
 	
   // READ MLE OF THETAF
+  int pcont;   /* number of controllable inputs */
   pcont = p-pstar;
   if(pcont==0) pcont=1; /* if there are no controllable inputs, alphaB and betaB
 			   won't matter, but we'll keep a slot in thetaF for
@@ -147,14 +136,17 @@ void bayesfit(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *nf,
   double s2F; /* data -- sum of squared deviations from individual means */
 
   double **X, **Xt; /* design matrix and its transpose */
-  //  double **XB, **XBt; /* design matrices */
 
   if (screen != 0){
 		Rprintf("\n--- Setting up the input data and creating output files ---\n");
   }
-	
-  bayesfitSetupCalib(screen,home,multmle,p,q,pstar,pcont,NM,NF,&thetaF,&thetaM,&thetaL,&priorshapes,&prioriscales, 
+
+  if (pstar != 0)
+	  bayesfitSetupCalib(screen,home,multmle,p,q,pstar,pcont,NM,NF,&thetaF,&thetaM,&thetaL,&priorshapes,&prioriscales,
 				&ubounds,&yF,&yM,&y,&NFtot,&Nrep,&ZF,&ZM,&Z,&s2F,&X,&Xt,&fileF,&filepath,&fileU,&frateU);	
+  else bayesfitSetup(screen,home,multmle,p,q,pstar,pcont,NM,NF,&thetaF,&thetaM,&thetaL,&priorshapes,&prioriscales,
+			&yF,&yM,&y,&NFtot,&Nrep,&ZF,&ZM,&Z,&s2F,&X,&Xt,&fileF,&filepath);
+
 
   if (screen != 0){
 	  Rprintf("\n--- Finished. Ready to start MCMC ---\n");
@@ -195,7 +187,7 @@ void bayesfit(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *nf,
   }
 
   //READ/CONSTRUCT DATA
-  int N;       /* NM+NF */
+  int N;
   N = NM+NF;
   int one=1;
 
@@ -209,8 +201,6 @@ void bayesfit(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *nf,
     }
   }
 	
-  Rprintf("\n--- MCMC ---\n");
-
 /*********************************/
  
 /**** STARTING TARGET  ***********/
@@ -245,10 +235,6 @@ void bayesfit(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *nf,
 
   double *path; /* stores the current draw of y*M and b* */ 
   path=dvector(0,2*NF);
-
- // never used???	
- // double *b;
- // b=dvector(0,NF); /* solution to C'b=y */
 	
   if(meanbias==1){
 	  double *muB; // mean vector
@@ -259,14 +245,12 @@ void bayesfit(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *nf,
 
 
 	  char filemuB [100]; /* file where the sequence of muB should go */
-	  //scanf("%s",filemuB); /* file where the sequence of muB should go */
 	  char strtmp [100]="";
 	  strcpy(strtmp,home);
 	  strcat(strtmp,filemuB);
 	  strcpy(filemuB,strtmp);
-	  if (screen==1) {
+	  if (screen!=0) {
 		  Rprintf("file where the sequence of muB should go=%s\n",filemuB);
-		  //scanf("%d",&qB); /* number of parameters of the linear model X thetaB */
 		  Rprintf("number of parameters of the linear model X thetaB=%d\n",qB);
 	  }
     thetaB=dvector(0,qB);
@@ -283,7 +267,7 @@ void bayesfit(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *nf,
   if(pstar!=0){ /* draw calibration inputs and put them in Z */
 	  if (screen !=0) {
 		  Rprintf("About to draw calibration inputs and put them in Z\n");
-		  dprintmat(ubounds, 1, 5);
+		  dprintmat(ubounds, pstar, 5);
 	  }
     ustar=dvector(0,pstar);
     ustaraux=dvector(0,pstar);
@@ -309,13 +293,6 @@ void bayesfit(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *nf,
   getD(ZF,DF,NF,thetaF,pcont);
   getsigmas(thetaF,DF,sigmasB,NF,pcont);
   getsigma(sigmaB,thetaF,sigmasB,NF,pcont);
-
-  // if b==0, then uncomment
-  /* for(i=0;i<NF;i++){
-    for(j=0;j<NF;j++){
-      sigmaB[i][j]=0.0;
-    }
-  } */
 
   /* do Cholesky */
   dcopymatrix(sigmaB,sigmaBChol,NF, NF);
@@ -368,12 +345,18 @@ void bayesfit(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *nf,
   fprintf(fcal,"");
   fclose(fcal);
 
+  //###########
+  // MCMC LOOP
+  //###########
+  Rprintf("\n--- MCMC ---\n");
   for(state=0;state<sim;state++){
 	R_CheckUserInterrupt();
-    /* *****************/
+
+	if (screen==1) Rprintf("the iteration is %i\n",state);
+
+	/* *****************/
     /* draw b* and y*M */
     /* *****************/
-
     // assemble covariance matrix of yM,yF,yM*,b* -> var
     getvar(sigmaM,sigmaB,var,thetaM,thetaF,NF,NM,Nrep,p,pstar);
 

@@ -1027,18 +1027,21 @@ double ** get_ubounds (char home[], int pstar){
 	/* read the matrix with bounds on u */
 	/* and the matrix specifying the priors and the bounds */
 	char fboundsU[100] = "bounds.dat";
-	strcpy(strtmp,home);
-	strcat(strtmp,fboundsU);
-	strcpy(fboundsU,strtmp);
 	
-/*	*ubounds = (double **) malloc((unsigned)pstar * sizeof(double *));		
-	(*ubounds)[0] = (double *) malloc((unsigned)(pstar*5) * sizeof(double));
-	for(i=1;i<pstar;i++) (*ubounds)[i] = (*ubounds)[i-1] + 5;
-*/	
 	double ** res;
-	res = darray2(pstar,5);
-	int auxError = 0;
-	auxError = dreadmat(fboundsU,res,pstar,5);
-	if (auxError!=0) Rprintf("Error while getting access to the file where the ubounds are =%s\n",fboundsU);
+	if (pstar != 0){
+		strcpy(strtmp,home);
+		strcat(strtmp,fboundsU);
+		strcpy(fboundsU,strtmp);
+
+		/*	*ubounds = (double **) malloc((unsigned)pstar * sizeof(double *));
+		(*ubounds)[0] = (double *) malloc((unsigned)(pstar*5) * sizeof(double));
+		for(i=1;i<pstar;i++) (*ubounds)[i] = (*ubounds)[i-1] + 5;
+		 */
+		res = darray2(pstar,5);
+		int auxError = 0;
+		auxError = dreadmat(fboundsU,res,pstar,5);
+		if (auxError!=0) Rprintf("Error while getting access to the file where the ubounds are =%s\n",fboundsU);
+	} else Rprintf ("Warning!!: trying to read priors for u when there are not calibration parameters\n");
 	return res;
 }

@@ -164,14 +164,13 @@ void predict_reality(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *n
   int *indlearn; /* vector indicating which calibration parameters you want to 
 					learn about (1) and which you just want to sample from the
 					prior */
-  int plearn;  /* total number of calibration parameters you want to learn */
+  int plearn=0;  /* total number of "true" calibration parameters you want to learn; the rest are unmeasured inputs */
   double **ubounds; /* calibration parameters and priors */	
   if(pstar!=0){
     ubounds = get_ubounds(home, pstar);
 
     indlearn = ivector(0,pstar);
     ireadvec(flearn,indlearn,pstar);
-    plearn = 0; /* total number of "true" calibration parameters; the rest are unmeasured inputs */
     for(i=0;i<pstar;i++)
       plearn = plearn + indlearn[i]; 
   }
@@ -297,8 +296,12 @@ void predict_reality(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *n
   thetaL = get_mlethetaL(home,q); /* contains the mle of thetaL - stage I */
 
   double *ustar, *ustaraux; /* calibration parameters and priors */
-  ustar = dvector(0,pstar);
-  ustaraux = dvector(0,pstar);
+  FILE *fu;
+  if(pstar!=0) {
+	  fu = fopen(fileU,"r");
+	  ustar = dvector(0,pstar);
+	  ustaraux = dvector(0,pstar);
+  }
 
   double ***DM; /* distance matrices */
   double ***sigmasM;
@@ -357,9 +360,6 @@ void predict_reality(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *n
 
   dgemv_(trans,&q,&N,&onedouble,&X[0][0],&q,&thetaL[0],
 	 &one,&zero,&mu[0],&one); /* mu=X theta^L */
-
-  FILE *fu;
-  if(pstar!=0) fu = fopen(fileU,"r");
   
   FILE *fmcmc;
   fmcmc = fopen(filemcmcF,"r");
@@ -377,23 +377,25 @@ void predict_reality(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *n
     fscanf(fmcmc,"%lf",&thetaF[0]);
     fscanf(fmcmc,"%lf",&thetaF[2*(pcont)+1]);
 
-    if(pstar!=0) 
-      for(j=0;j<pstar;j++){
-	fscanf(fu,"%lf",&ustar[j]);
-      }
+    for(j=0;j<pstar;j++){
+    	  fscanf(fu,"%lf",&ustar[j]);
+    }
 
     if(state>burn && fmod((double) state, (double) thin)==0.){
       
-      dcopy_(&pstar,&ustar[0],&one,&ustaraux[0],&one);
-      if(plearn < pstar) getpriordraws(ustar,pstar,indlearn,ubounds);
+      if (pstar!=0){
+    	  dcopy_(&pstar,&ustar[0],&one,&ustaraux[0],&one);
+
+    	  if(plearn < pstar) getpriordraws(ustar,pstar,indlearn,ubounds);
       
-      for(i=p-pstar;i<p;i++){
-	for(j=NMold;j<Nold;j++){
-	  ZM[i][j]=ustar[i-(p-pstar)];
-	}
-	for(j=Nold;j<Nold+NMnew;j++){
-	  ZM[i][j]=ustaraux[i-(p-pstar)];
-	}
+    	  for(i=p-pstar;i<p;i++){
+    		  for(j=NMold;j<Nold;j++){
+    			  ZM[i][j]=ustar[i-(p-pstar)];
+    		  }
+    		  for(j=Nold;j<Nold+NMnew;j++){
+    			  ZM[i][j]=ustaraux[i-(p-pstar)];
+    		  }
+    	  }
       }
 
       getD(ZM,DM,Nold+NMnew,thetaM,p);
@@ -401,9 +403,9 @@ void predict_reality(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *n
       getsigma(sigmaM,thetaM,sigmasM,Nold+NMnew,p);
 
       for(i=0;i<N;i++){
-	for(j=0;j<N;j++){
-	  var[i][j]=0.0;
-	}
+    	  for(j=0;j<N;j++){
+    		  var[i][j]=0.0;
+    	  }
       }
 
       /* construct global covariance matrix */
@@ -413,25 +415,25 @@ void predict_reality(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *n
       //dwritemat("var.tmp",var,N,N); exit(1);
 
       for(k=0;k<Nold;k++){ 
-	sigma11[k][k]=var[k][k];
-	for(j=0;j<k;j++){
-	  sigma11[k][j]=var[k][j];
-	  sigma11[j][k]=sigma11[k][j];
-	}
+    	  sigma11[k][k]=var[k][k];
+    	  for(j=0;j<k;j++){
+    		  sigma11[k][j]=var[k][j];
+    		  sigma11[j][k]=sigma11[k][j];
+    	  }
       }
 
       for(k=0;k<Nnew;k++){ 
-	sigma22[k][k]=var[k+Nold][k+Nold];
-	for(j=0;j<k;j++){
-	  sigma22[k][j]=var[k+Nold][j+Nold];
-	  sigma22[j][k]=sigma22[k][j];
-	}
+    	  sigma22[k][k]=var[k+Nold][k+Nold];
+    	  for(j=0;j<k;j++){
+    		  sigma22[k][j]=var[k+Nold][j+Nold];
+    		  sigma22[j][k]=sigma22[k][j];
+    	  }
       }
 
       for(k=0;k<Nnew;k++){ 
-	for(j=0;j<Nold;j++){
-	  sigma21[k][j]=var[k+Nold][j];
-	}
+    	  for(j=0;j<Nold;j++){
+    		  sigma21[k][j]=var[k+Nold][j];
+    	  }
       }
 
       dcopy_(&Nold,&mu[0],&one,&muold[0],&one);
@@ -464,24 +466,26 @@ void getpriordraws(double *ustar, int pstar, int *indlearn, double **bounds){
   double mean;
   //double p;
 
-  GetRNGstate();
-  for(i=0;i<pstar;i++){
-    if(indlearn[i]==0){ // draw from prior
+  if (pstar != 0){
+	  GetRNGstate();
+	  for(i=0;i<pstar;i++){
+		  if(indlearn[i]==0){ // draw from prior
       
-      if(bounds[i][0]==0.0) 
-	ustar[i]= runif(0.0,1.0)*(bounds[i][2]-bounds[i][1]) + bounds[i][1];
-      else{
-	mean = bounds[i][3];
-	sigma2 = bounds[i][4];
-	tmp = rnorm(mean,sqrt(sigma2));
-	while(tmp<bounds[i][1] || tmp>bounds[i][2]){
-	  tmp = rnorm(mean,sqrt(sigma2));
-	}
-	ustar[i]=tmp;
-      }
-    }
-  }
-  PutRNGstate();
+			  if(bounds[i][0]==0.0)
+				  ustar[i]= runif(0.0,1.0)*(bounds[i][2]-bounds[i][1]) + bounds[i][1];
+			  else{
+				  mean = bounds[i][3];
+				  sigma2 = bounds[i][4];
+				  tmp = rnorm(mean,sqrt(sigma2));
+				  while(tmp<bounds[i][1] || tmp>bounds[i][2]){
+					  tmp = rnorm(mean,sqrt(sigma2));
+				  }
+				  ustar[i]=tmp;
+			  }
+		  }
+	  }
+	  PutRNGstate();
+  } else Rprintf ("WARNIGN!:Trying to draw priors when there are no calibration parameters.\n");
 }
 
 void getvar_pr(double **RM, double **RB, double **result, double *parM,

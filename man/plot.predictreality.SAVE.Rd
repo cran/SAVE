@@ -1,10 +1,11 @@
 \name{plot.predictreality.SAVE}
+\alias{plot.predictreality.SAVE}
 \alias{plot,predictreality.SAVE-method}
 \title{
 A function for plotting summaries of an object of class \code{predictreality.SAVE}.
 }
 \description{
-Two different plots to summarize graphically the results in an object of class \code{predicreality.SAVE}.
+Two different plots to summarize graphically the results in an object of class \code{predictreality.SAVE}.
 }
 \usage{
 \S4method{plot}{predictreality.SAVE}(x, option = "trace", ...)
@@ -19,7 +20,7 @@ Two different plots to summarize graphically the results in an object of class \
   \item{...}{Additional graphical parameters to be passed}
 }
 \details{
-If \code{option}="biascorr" this function returns a plot with punctual predictions and 95\% tolerance bounds of reality at the given set of controllable inputs. If \code{option}="biasfun" the plot represents the estimated bias and 95\% tolerance bounds.
+If \code{option}="biascorr" this function returns a plot with point predictions and 95\% tolerance bounds of reality at the given set of controllable inputs. If \code{option}="biasfun" the plot represents the estimated bias and 95\% credible bounds.
 }
 
 \author{ Jesus Palomo, Rui Paulo and Gonzalo Garcia-Donato. }
@@ -40,13 +41,17 @@ data(spotweldmodel,package='SAVE')
 # compute the corresponding mle estimates
 ##############
 
-gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), calibration.names=c("t"), field.data=spotweldfield, model.data=spotweldmodel, mean.formula=as.formula("~1"), bestguess=list(t=4.0))
+gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), 
+			 calibration.names=c("t"), field.data=spotweldfield, 
+			 model.data=spotweldmodel, mean.formula=as.formula("~1"), 
+			 bestguess=list(t=4.0))
 
 ##############
 # obtain the posterior distribution of the unknown parameters
 ##############
 
-gfsw <- bayesfit(object=gfsw, prior=c(uniform("t", upper=8, lower=0.8)), n.iter=20000, n.burnin=100, n.thin=2)
+gfsw <- bayesfit(object=gfsw, prior=c(uniform("t", upper=8, lower=0.8)), 
+				 n.iter=20000, n.burnin=100, n.thin=2)
 
 #########
 # bias-corrected prediction at a set of inputs

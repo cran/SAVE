@@ -1,10 +1,13 @@
-\name{plot.SAVE}
+%\name{plot.SAVE}
+\name{plot}
+\alias{plot.SAVE}
+\alias{plot}
 \alias{plot,SAVE-method}
 \title{
-A function for plotting summaries of an object of class \code{SAVE} after the function \code{bayesfit} has been run.
+Plots for an object of class \code{SAVE}
 }
 \description{
-Three different plots to summarize graphically the Bayesian analysis of a computer model.
+Plots are provided to summarize graphically the Bayesian analysis of a computer model.
 }
 \usage{
 \S4method{plot}{SAVE}(x, option = "trace", ...)
@@ -19,7 +22,7 @@ Three different plots to summarize graphically the Bayesian analysis of a comput
   \item{...}{Additional graphical parameters to be passed}
 }
 \details{
-If \code{option}="trace" this function returns a plot with the trace of the MCMC simulated chain. This plot is useful for testing the convergence of the sampling method. If \code{option}="calibration" this function plots a histogram of the sample obtained from the posterior distribution of the calibration parameters and a line representing the prior assumed. If \code{option}="precision" the histogram and prior correspond to the precision parameters.
+Three different plots are implemented. If \code{option}="trace" this function returns the trace plots of the simulated chains. This plot is useful for assessing the convergence of the sampling method. If \code{option}="calibration" this function plots an histogram of the sample obtained from the posterior distribution of the calibration parameters and a line representing the prior assumed. If \code{option}="precision" the histograms and priors correspond to the precision parameters.
 }
 
 \author{ Jesus Palomo, Rui Paulo and Gonzalo Garcia-Donato. }
@@ -40,13 +43,17 @@ data(spotweldmodel,package='SAVE')
 # compute the corresponding mle estimates
 ##############
 
-gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), calibration.names=c("t"), field.data=spotweldfield, model.data=spotweldmodel, mean.formula=as.formula("~1"), bestguess=list(t=4.0))
+gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), 
+			 calibration.names=c("t"), field.data=spotweldfield,
+			 model.data=spotweldmodel, mean.formula=as.formula("~1"),
+			 bestguess=list(t=4.0))
 
 ##############
 # obtain the posterior distribution of the unknown parameters
 ##############
 
-gfsw <- bayesfit(object=gfsw, prior=c(uniform("t", upper=8, lower=0.8)), n.iter=20000, n.burnin=100, n.thin=2)
+gfsw <- bayesfit(object=gfsw, prior=c(uniform("t", upper=8, lower=0.8)), 
+				 n.iter=20000, n.burnin=100, n.thin=2)
 
 #A trace plot of the chains
 plot(gfsw, option="trace")

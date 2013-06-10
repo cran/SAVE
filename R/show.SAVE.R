@@ -69,62 +69,71 @@ setMethod ("show", "SAVE", function(object){
 ##                        Plot Method
 ##*****************************************************************************
 plot.SAVE<- function(x, option="trace",...){
-	object <- x
-	if (dim(object@mcmcsample)[1]==0){stop("Nothing to be plotted before bayesfit is run.\n")}
-	
-	if (option=="trace")
-	{
-		target<- as.mcmc(object@mcmcsample)
-		plot(target, trace=TRUE, density=FALSE, ...)
-	}
-	if (option=="calibration")
-	{
-		howmanycal<- dim(object@mcmcsample)[2]-2
-		nc<- round(sqrt(howmanycal))
-		nr<- howmanycal/nc
-		par(mfrow=c(nr,nc))
-		for (i in 1:howmanycal){
-			
-#thisprior<- as.numeric(object@prior[(i-1)*6+2:6])
-			thisprior<- as.numeric(object@prior[(i-1)*5+1:5])
+		object <- x
+		if (dim(object@mcmcsample)[1]==0){stop("Nothing to be plotted before bayesfit is run.\n")}
 
-			hs<- hist(object@mcmcsample[,i], breaks=seq(from=thisprior[2], to=thisprior[3], length=20), 
-					  col=gray(.85),border=gray(1), main="", 
-					  xlab=colnames(object@mcmcsample)[i], prob=T)
-			
-			xpr<- seq(from=thisprior[2],to=thisprior[3],length=100)
-			if (thisprior[1]==1){
-				densprior<- function(x){
-					denom<- pnorm(q=thisprior[3], mean=thisprior[4], sd=sqrt(thisprior[5]))-pnorm(q=thisprior[2], mean=thisprior[4], sd=sqrt(thisprior[5]))
-					dnorm(x, mean=thisprior[4], sd=sqrt(thisprior[5]))/denom
-				}}
-			if (thisprior[1]==0){
-				densprior<- function(x){
-					dunif(x, min=thisprior[2], max=thisprior[3])	
-				}}
-			
-			ypr<- vapply(xpr, FUN=densprior, FUN.VALUE=1)
-			lines(xpr, ypr, type="l", ...)				
-			
+		if (option=="trace")
+		{
+			target<- as.mcmc(object@mcmcsample)
+			plot(target, trace=TRUE, density=FALSE, ...)
 		}
-	}
-	if (option=="precision")
-	{
-		par(mfrow=c(1,2))
-		ncal<- dim(object@mcmcsample)[2]-2
-#plot lambdaB
-		hs<- hist(object@mcmcsample[,ncal+1], col=gray(.85),border=gray(1), main="", 
-			 xlab=colnames(object@mcmcsample)[ncal+1], prob=T, breaks=20)
-		xpr<- seq(from=hs$breaks[1], to=hs$breaks[length(hs$breaks)],length=100)
-		ypr<- dexp(x=xpr,rate=1/(object@mle$thetaF['lambdaB']*object@mcmcMultmle))
-		lines(xpr, ypr, type="l", ...)
-#plot lambdaF
-		hs<- hist(object@mcmcsample[,ncal+2], col=gray(.85),border=gray(1), main="", 
-			 xlab=colnames(object@mcmcsample)[ncal+2], prob=T, breaks=20)
-		xpr<- seq(from=hs$breaks[1], to=hs$breaks[length(hs$breaks)],length=100)
-		ypr<- dexp(x=xpr,rate=1/(object@mle$thetaF['lambdaF']*object@mcmcMultmle))
-		lines(xpr, ypr, type="l", ...)
-	}
+		if (option=="calibration"){
+			if (length(object@calibrationnames)!=0)
+			{
+			 howmanycal<- dim(object@mcmcsample)[2]-2
+			 nc<- round(sqrt(howmanycal))
+			 nr<- ceiling(howmanycal/nc)
+			 par(mfrow=c(nr,nc))
+			 for (i in 1:howmanycal){
+
+				#thisprior<- as.numeric(object@prior[(i-1)*6+2:6])
+				#thisprior<- as.numeric(object@prior[(i-1)*5+1:5])
+				thisprior<- as.numeric(object@prior[i,1:5])
+
+				hs<- hist(object@mcmcsample[,i], breaks=seq(from=thisprior[2], to=thisprior[3], length=20), 
+						  col=gray(.85),border=gray(1), main="", 
+						  xlab=colnames(object@mcmcsample)[i], prob=T)
+
+				xpr<- seq(from=thisprior[2],to=thisprior[3],length=100)
+				if (thisprior[1]==1){
+					densprior<- function(x){
+						denom<- pnorm(q=thisprior[3], mean=thisprior[4], sd=sqrt(thisprior[5]))-pnorm(q=thisprior[2], mean=thisprior[4], sd=sqrt(thisprior[5]))
+						dnorm(x, mean=thisprior[4], sd=sqrt(thisprior[5]))/denom
+					}}
+				if (thisprior[1]==0){
+					densprior<- function(x){
+						dunif(x, min=thisprior[2], max=thisprior[3])	
+					}}
+
+				ypr<- vapply(xpr, FUN=densprior, FUN.VALUE=1)
+				lines(xpr, ypr, type="l", ...)				
+
+			 }
+			} else print("There are no calibration parameters. Nothing to plot.")
+		}
+		if (option=="precision")
+		{
+			par(mfrow=c(1,2))
+			ncal<- dim(object@mcmcsample)[2]-2
+			#plot lambdaB
+			hs<- hist(object@mcmcsample[,ncal+1], col=gray(.85),border=gray(1), main="", 
+				 xlab=colnames(object@mcmcsample)[ncal+1], prob=T, breaks=20)
+			xpr<- seq(from=hs$breaks[1], to=hs$breaks[length(hs$breaks)],length=100)
+			ypr<- dexp(x=xpr,rate=1/(object@mle$thetaF['lambdaB']*object@mcmcMultmle))
+			lines(xpr, ypr, type="l", ...)
+			abline(v=object@mle$thetaF['lambdaB'],lty=2)
+			print(object@mle$thetaF['lambdaB'])
+			#plot lambdaF
+			hs<- hist(object@mcmcsample[,ncal+2], col=gray(.85),border=gray(1), main="", 
+				 xlab=colnames(object@mcmcsample)[ncal+2], prob=T, breaks=20)
+			xpr<- seq(from=hs$breaks[1], to=hs$breaks[length(hs$breaks)],length=100)
+			ypr<- dexp(x=xpr,rate=1/(object@mle$thetaF['lambdaF']*object@mcmcMultmle))
+			lines(xpr, ypr, type="l", ...)
+			print(object@mle$thetaF['lambdaF'])
+			abline(v=object@mle$thetaF['lambdaF'],lty=2)
+		}
+	par(mfrow=c(1,1))
+	
 }
 
 #if(!isGeneric("plot")) {

@@ -10,7 +10,6 @@
 ##########################################################################
 
 validate.SAVE <- function(object, newdesign, calibration.value="mean", prob=0.90, n.burnin=0, n.thin=1, tol=1E-10){
-	
 
 	tmp<- predictreality(object=object, newdesign=newdesign, n.burnin=n.burnin, n.thin=n.thin, tol=tol)
 	reality<- (tmp@biaspred+tmp@modelpred)
@@ -24,38 +23,37 @@ validate.SAVE <- function(object, newdesign, calibration.value="mean", prob=0.90
 	tau.real <- apply(X=tmpdata,MARGIN=2,FUN=quantile,probs=prob)
 	
 	#Specify the value of the calibration parameters:
-	if (is.character(calibration.value)){
-		if (calibration.value=="mean")
-		{calibration.value<- apply(as.matrix(object@mcmcsample[,object@calibrationnames]), MARGIN=2, FUN=mean)}
-		else {
-			if (calibration.value=="median")
-			{calibration.value<- apply(as.matrix(object@mcmcsample[,object@calibrationnames]), MARGIN=2, FUN=median)}
-			else {stop("Invalid calibration.value\n")}
+	if (length(object@calibrationnames) != 0){
+		if (is.character(calibration.value)){
+			if (calibration.value=="mean")
+			{calibration.value<- apply(as.matrix(object@mcmcsample[,object@calibrationnames]), MARGIN=2, FUN=mean)}
+			else {
+				if (calibration.value=="median")
+				{calibration.value<- apply(as.matrix(object@mcmcsample[,object@calibrationnames]), MARGIN=2, FUN=median)}
+				else {stop("Invalid calibration.value\n")}
+			}
 		}
-	}
-	else{
-		calibration.value<- vapply(calibration.value, FUN=function(x){x[1]}, FUN.VALUE=c(0))[object@calibrationnames]
-	}
-#cat('1\n')	
-	newdesignpure<- cbind(newdesign, matrix(calibration.value, nrow=dim(newdesign)[1], byrow=T))
-	names(newdesignpure) <- c(names(newdesign),object@calibrationnames)
-#cat('1.5\n')
+		else{
+			calibration.value<- vapply(calibration.value, FUN=function(x){x[1]}, FUN.VALUE=c(0))[object@calibrationnames]
+		}
+
+		newdesignpure<- cbind(newdesign, matrix(calibration.value, nrow=dim(newdesign)[1], byrow=T))
+		names(newdesignpure) <- c(names(newdesign),object@calibrationnames)
+	} else newdesignpure <- newdesign
 	puremodel<- predictcode(object=object, newdesign=newdesignpure, n.iter=10, sampledraws=F, tol=tol)@modelmean
-#cat('2\n')	
-	
+		
 	# tolerance bounds
 	tmpdata <- matrix(puremodel,ncol=dim(reality)[2],nrow=dim(reality)[1],
 					  byrow=T)
 	tmpdata2 <- reality - tmpdata
 	tmpdata2 <- apply(X=tmpdata2,MARGIN=2,FUN=abs)
 	tau.pure <- apply(X=tmpdata2,MARGIN=2,FUN=quantile,probs=prob)
-#cat('3\n')	
-	
+
 	#the estimates of the bias:
 	bias<- apply(X=as.matrix(reality-tmpdata), MARGIN=2, FUN=mean)
 	biasL<- apply(X=as.matrix(reality-tmpdata), MARGIN=2, FUN=quantile, probs=(1-prob)/2)
 	biasU<- apply(X=as.matrix(reality-tmpdata), MARGIN=2, FUN=quantile, probs=(1+prob)/2)
-#cat('4\n')	
+	
 	#Results are being stored in an object called results
 	result<- new("validate.SAVE")
 	result@call<- object@call
@@ -65,6 +63,11 @@ validate.SAVE <- function(object, newdesign, calibration.value="mean", prob=0.90
 	# to the function
 	dprct <- .deprecate.parameters(call=sys.call(sys.parent(1)))
 	result@validatecall <- as.call(dprct)
+	if (length(object@calibrationnames) == 0){
+		aux <- which(names(result@validatecall)=="calibration.value")
+		#print (paste("The specified parameter calibration.value=",result@validatecall[aux]," has been removed since there are no calibration parameters in the model.",sep=''))
+		result@validatecall <- result@validatecall[-aux]
+	}
 	
 	result@newdesign<- newdesign
 	result@validate<- cbind(meanreality, tau.real, puremodel, tau.pure, bias, biasL, biasU)
@@ -76,7 +79,8 @@ validate.SAVE <- function(object, newdesign, calibration.value="mean", prob=0.90
 
 if(!isGeneric("validate")) {
 	setGeneric(name = "validate",
-			def = function(object, newdesign, calibration.value="mean", prob=0.90, n.burnin=0, n.thin=1, tol=1E-10,...) 
+			def = function(object, newdesign, calibration.value="mean",
+					prob=0.90, n.burnin=0, n.thin=1, tol=1E-10,...) 
 				standardGeneric("validate")
 	)
 }
@@ -133,7 +137,7 @@ show.summary.validate.SAVE<- function(object){
 	print(object@callvalidate)
 	cat("---------------\n")
 	cat("Results:\n")
-	if (!is.null(object@summaries)){
+	if (!is.null(object@summaries) || length(object@summaries)!=0){
 	  print(object@summaries)
 	  }
 	}

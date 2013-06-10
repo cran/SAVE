@@ -16,10 +16,12 @@ normal(var.name, mean, sd, lower, upper)
   \item{sd}{The prior standard deviation for \code{var.name}.}
 }  
      
-\details{ This functions are intended as user-friendly way of specifying the type of priors assumed for the calibration parameters with the function \code{bayesfit}.
+\details{ These functions are intended as a user-friendly way of specifying the type of priors assumed for the calibration parameters in the function \code{bayesfit}.
 
- For example, for a problem with calibration parameters named ("delta1", "shift") a possible prior could be\cr
+For example, in a problem with calibration parameters named "delta1" and "shift", a uniform(0,1) prior for "delta1" and for "shift" a normal density with mean 2 and standard deviation 1 truncated to the interval (0,3), the prior should be specified as\cr
 
- \code{prior=c(uniform(var.name="delta1", lower=0, upper=1), normal(var.name="shift", mean=2, sd=1, lower=0, upper=8))}
+prior=c(uniform(var.name="delta1", lower=0, upper=1),\cr
+	normal(var.name="shift", mean=2, sd=1, lower=0, upper=3))
+	
  }
 

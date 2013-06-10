@@ -7,8 +7,8 @@
 \alias{summary.SAVE-class}
 \alias{summary,SAVE-method}
 \alias{show.summary.SAVE}
-\title{ Functions to start the Statistical Analysis and Validation Engine of a computer model and corresponding exploration of results }
-\description{\code{SAVE} starts the main object for subsequent analyses.}
+\title{ Setting up the analysis of a computer model }
+\description{ Setting up the SAVE methodology: construction of an emulator of the computer model and estimation of the parameters of the Gaussian process for the bias function. }
 \usage{
 SAVE(response.name, controllable.names, calibration.names, field.data, model.data,
              mean.formula, bestguess)
@@ -30,7 +30,7 @@ SAVE(response.name, controllable.names, calibration.names, field.data, model.dat
   \item{object}{An object of the corresponding signature.}
 }  
      
-\details{This function fits the emulator of the computer model and an estimation of the bias function. Calculations are partially based on the package \code{DiceKriging}}
+\details{ Based on computer model runs, \code{SAVE} fits an approximation of the model output, usually called an emulator. The emulator is constructed using the Gaussian process response technique (GASP), described in more detail in \code{\link[SAVE]{SAVE-class}}. Further, at this stage an estimation of the parameters of the Gaussian process specifying the bias function (difference between field observations and computer model outputs) is also performed. Some of the calculations are done using the package \code{DiceKriging}}
 
 \value{
   \code{SAVE} returns an S4 object of class \code{SAVE} (see \code{SAVE-class}). 
@@ -55,7 +55,7 @@ Roustant O., Ginsbourger D. and Deville Y. (2012).
 
 \author{Jesus Palomo, Rui Paulo and Gonzalo Garcia-Donato}
   
-\seealso{ \code{"\link[=plot,predictcode.SAVE-method]{predictcode}"},
+\seealso{ \code{\link[=predictcode]{predictcode}},
 	  	  \code{\link[=bayesfit.SAVE]{bayesfit}}  
 }
 	
@@ -75,7 +75,10 @@ data(spotweldmodel,package='SAVE')
 # compute the corresponding mle estimates
 ##############
 
-gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), calibration.names=c("t"), field.data=spotweldfield, model.data=spotweldmodel, mean.formula=as.formula("~1"), bestguess=list(t=4.0))
+gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), 
+			 calibration.names=c("t"), field.data=spotweldfield, 
+			 model.data=spotweldmodel, mean.formula=as.formula("~1"), 
+			 bestguess=list(t=4.0))
 
 # summary of the results
 

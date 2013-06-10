@@ -23,22 +23,25 @@ void bayesfitSetupCalib(int screen, char home[], double multmle, int p, int q, i
 				   double ***ZM, double ***Z, double *s2F, double ***X, double ***Xt, char **fileF, char **filepath, 
 				   char **fileU, char **frateU)
 {
-	if (screen != 0) Rprintf("\n--- Entra en bayesfitSetup ---\n");
+	if (screen != 0){
+		Rprintf("\n--- Entra en bayesfitSetup ---\n");
+		Rprintf("Home is: %s\n",home);
+	}
 
 	// FILENAMES
 	char strtmp[100];
-	//Rprintf("strtmp is: %s\n",strtmp);
+	if (screen != 0) Rprintf("strtmp is: %s\n",strtmp);
 	
 	/* file where sequence of thetaF goes */
 	char afileF [100];
-	//Rprintf("FileF is: %s\n",*fileF);
+	if (screen != 0) Rprintf("FileF is: %s\n",*fileF);
 	strcpy(strtmp,home);
 	strcat(strtmp,"thetaF.out");
-	//Rprintf("strtmp is: %s\n",strtmp);
+	if (screen != 0) Rprintf("strtmp is: %s\n",strtmp);
 	strcpy(afileF,strtmp);
 	*fileF = malloc(sizeof(afileF));
 	memcpy(*fileF, afileF, sizeof(afileF));
-	//Rprintf("FileF is: %s\n",fileF);
+	if (screen != 0) Rprintf("FileF is: %s\n",fileF);
 	
 	/* file where sequence of (yM*,b) goes */
 	char afilepath [100];
@@ -47,10 +50,13 @@ void bayesfitSetupCalib(int screen, char home[], double multmle, int p, int q, i
 	strcpy(afilepath,strtmp);
 	*filepath = malloc(sizeof(afilepath));
 	memcpy(*filepath, afilepath, sizeof(afilepath));
+	if (screen != 0){
+		Rprintf("filepath.out is: %s\n",*filepath);
+	}
 	
 	
 	////////////////////////////////////////////////////////
-	//if(pstar!=0){
+	//
 	/* file where the sequence of ustars goes */
 	char afileU [100];
 	strcpy(strtmp,home);
@@ -267,6 +273,8 @@ void bayesfitSetup(int screen, char home[], double multmle, int p, int q, int ps
 		Rprintf("filepath.out is: %s\n",*filepath);
 	}
 	
+	int i, j; //counters
+
 	/*********************************/
 	/****** INPUTS TO THE PROBLEM ****/
 	/*********************************/
@@ -285,11 +293,9 @@ void bayesfitSetup(int screen, char home[], double multmle, int p, int q, int ps
 		Rprintf("file containing the sequence of (yM*,b) goes=%s\n",*filepath);
 		
 	}
-	
-	int i, j; //counters
-	
+
+	////////////////////////////////////////////////////////
 	// READ MLE OF THETAF
-	
 	*thetaF = get_mlethetaF(home,pcont);	
 	// READ MLE OF THETAM
 	*thetaM = get_mlethetaF(home,p);
@@ -313,38 +319,23 @@ void bayesfitSetup(int screen, char home[], double multmle, int p, int q, int ps
 	for(i=0;i<pcont+2;i++)
 		(*prioriscales)[i]=1./(*prioriscales)[i];
 	
+	*Nrep = get_inputsrep(home, NF);
+
 	//READ/CONSTRUCT DATA
 	int N;       /* NM+NF */
 	N = NM+NF;
-	
-	*yM = get_datacode(home,NM);
-	
-	*Nrep = get_inputsrep(home, NF);
-	
+
 	/* total number of field observations (this number includes 
 	 the replicates)
 	 compute total number of field observations */
 	for(i=0;i<NF;i++){
 		*NFtot = *NFtot+(*Nrep)[i];
 	}
-	
-	double *yFaux; /* raw field data */ 
-	yFaux = get_datafield(home,*Nrep,*NFtot);
-	
-	int ntmp=0;
-	*s2F=0.0;
-	*yF = dvector(0,NF);
-	for(i=0;i<NF;i++){
-		(*yF)[i]=0.0;
-		for(j=0;j<(*Nrep)[i];j++){
-			(*yF)[i]=(*yF)[i]+yFaux[ntmp];
-			*s2F=*s2F+pow(yFaux[ntmp],2.);
-			ntmp=ntmp+1;
-		}
-		(*yF)[i]=(*yF)[i]/(double)(*Nrep)[i];
-		*s2F=*s2F-(double)(*Nrep)[i]*pow((*yF)[i],2.);
-	}
-	free_dvector(yFaux,0,*NFtot);
+
+	*yM = get_datacode(home,NM);
+
+	*yF = get_datafield_s2F(home,*Nrep, NF,&*s2F); /* raw field data */
+	if (screen != 0) Rprintf("yF read\n");
 	
 	*y = dvector(0,N);
 	dcopy_(&NM,&(*yM)[0],&one,&(*y)[0],&one);

@@ -5,7 +5,10 @@
 \title{
 Simulator Analysis and Validation Engine}
 \description{
-This package provides a statistical framework for the analysis of complex computer models, with special emphasis on aspects related with emulation, calibration and validation. The methodology implemented in SAVE is directly based on Bayarri et al (2007) but has roots also in the papers by Craig et al (1996), Kennedy and O'Hagan (2001) and Higdon et al (2004).
+This package provides a statistical framework for the analysis of complex computer models, that is, for computer models that are expensive to run. Special emphasis is placed on key aspects like emulation (predicting the output of the code at new input points), calibration (`tuning' the model so that it matches reality) and validation (answering the question of whether the model adequately represents reality). 
+
+The methodology implemented in SAVE is Bayesian and is directly based on Bayarri et al (2007) but has roots also in the papers by Craig et al (1996), Kennedy and O'Hagan (2001) and Higdon et al (2004).
+
 }
 \details{
 \tabular{ll}{
@@ -63,13 +66,17 @@ data(spotweldmodel,package='SAVE')
 # compute the corresponding mle estimates
 ##############
 
-gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), calibration.names=c("t"), field.data=spotweldfield, model.data=spotweldmodel, mean.formula=as.formula("~1"), bestguess=list(t=4.0))
+gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), 
+			 calibration.names=c("t"), field.data=spotweldfield, 
+			 model.data=spotweldmodel, mean.formula=as.formula("~1"), 
+			 bestguess=list(t=4.0))
 
 ##############
 # obtain the posterior distribution of the unknown parameters 
 ##############
 
-gfsw <- bayesfit(object=gfsw, prior=c(uniform("t", upper=8, lower=0.8)), n.iter=20000, n.burnin=100, n.thin=2)
+gfsw <- bayesfit(object=gfsw, prior=c(uniform("t", upper=8, lower=0.8)),
+				 n.iter=20000, n.burnin=100, n.thin=2)
 
 ##############
 # validate the computer model at chosen set of controllable

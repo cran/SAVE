@@ -12,9 +12,9 @@
 
 
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ Predicting values of reality at new input points }
+\title{ Predict values of reality at new input points }
 \description{
-The emulator of the computer model and the Bayesian fit are used to produce samples from the posterior distribution of the computer model and from the bias function at associated new entry points. Then, bias-corrected predictions of the response under study can be obtained through addition (model+bias). We call these, predictions of reality.
+The emulator of the computer model and the Bayesian fit are used to produce samples from the posterior predictive distribution of the computer model and bias function evaluated at the new input points. Then, bias-corrected predictions of the response (reality) are produced by adding these two samples (model+bias).
 }
 \usage{
 \S4method{predictreality}{SAVE}(object, newdesign, n.burnin=0, n.thin=1, tol=1E-10, ...)
@@ -36,7 +36,7 @@ The emulator of the computer model and the Bayesian fit are used to produce samp
 
 \value{
 	Returns an S4 object of class \code{predictreality.SAVE} with the following slots:
-  \item{modelpred}{A matrix with the simulations from the posterior distribution of the computer model output evaluated at the new design}
+  \item{modelpred}{A list with the simulations from the posterior distribution of the computer model output evaluated at the new design}
   \item{biaspred }{ A matrix with the simulations from the posterior distribution of the bias function evaluated at the new design. }
   \item{newdesign }{ A copy of the design given as argument. }
   \item{predictrealitycall }{ The call to the function. }
@@ -44,16 +44,15 @@ The emulator of the computer model and the Bayesian fit are used to produce samp
 }
 
 \details{
-Posterior predictions of the computer model and bias over a given set of controllable inputs are simulated based on a Monte Carlo Markov Chain sampling mechanism. If \code{n.thin=1} and \code{n.burnin=0} the simulations have the same size as the sample size in \code{object@mcmcsample}. Otherwise, the first \code{n.burnin} are discharged and only each of \code{n.burnin} are kept. 
+Draws from the posterior predictive distribution of the computer model and bias at a given set of controllable inputs are simulated using the MCMC sample from the posterior distribution of the parameters of the model stored in \code{object@mcmcsample}. This sample can be thinned by 
+\code{n.thin} and/or the first \code{n.burnin} draws can be discarded.
 
-A first analysis of the resulting sample can be performed with \code{summary} which provides punctual estimations and tolerance bounds of the resulting predictions.
+A preliminary analysis of the resulting sample can be performed with \code{summary} which provides point estimates and tolerance bounds of the predictions.
 }
 
 \author{ Jesus Palomo, Rui Paulo and Gonzalo Garcia-Donato. }
 
-\seealso{  \code{"\link[=plot,predictreality.SAVE-method]{predictreality}"}, 
-			\code{\link[=validate,SAVE-method]{validate}}
-}
+\seealso{ \code{\link[=validate,SAVE-method]{validate}} }
 
 \examples{ 
 \dontrun{
@@ -71,7 +70,10 @@ data(spotweldmodel,package='SAVE')
 # compute the corresponding mle estimates
 ##############
 
-gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), calibration.names=c("t"), field.data=spotweldfield, model.data=spotweldmodel, mean.formula=as.formula("~1"), bestguess=list(t=4.0))
+gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), 
+			 calibration.names=c("t"), field.data=spotweldfield, 
+			 model.data=spotweldmodel, mean.formula=as.formula("~1"), 
+			 bestguess=list(t=4.0))
 
 # summary of the results
 
@@ -81,7 +83,8 @@ summary(gfsw)
 # obtain the posterior distribution of the unknown parameters
 ##############
 
-gfsw <- bayesfit(object=gfsw, prior=c(uniform("t", upper=8, lower=0.8)), n.iter=20000, n.burnin=100, n.thin=2)
+gfsw <- bayesfit(object=gfsw, prior=c(uniform("t", upper=8, lower=0.8)), 
+				 n.iter=20000, n.burnin=100, n.thin=2)
 
 #########
 # bias-corrected prediction at a set of inputs

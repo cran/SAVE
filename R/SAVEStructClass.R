@@ -42,13 +42,25 @@ setClass("SAVE",
 			 wd="character",
 			 call="call",
 			 bayesfitcall="call"
-			),
-	validity=function(object){
-		if (is.null(controllablenames))
-			{return("Controllable names are nor provided\n")}
-		TRUE
-		}
+			)
 		)
+		
+validSAVEobject <- function(object) {
+		if (is.null(object@responsename) || length(object@responsename)==0)
+		{return("Response names are not provided\n")}
+		
+		if (is.null(object@controllablenames) || length(object@controllablenames)==0)
+		{return("Controllable names are not provided\n")}
+		
+		if (is.null(object@yf) || length(object@yf)==0)
+		{return("field data are not provided\n")}
+		
+		if (is.null(object@ym) || length(object@ym)==0)
+		{return("Model data are not provided\n")}
+		TRUE
+	}
+setValidity("SAVE",validSAVEobject)
+
 
 setClass("summary.SAVE", representation(
 		#only STAGEI:

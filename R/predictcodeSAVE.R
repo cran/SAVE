@@ -21,7 +21,8 @@ predictcode.SAVE <- function(object, newdesign, n.iter, sampledraws, tol){
 
 #####
 #New design
-  x.new<- newdesign[,c(object@controllablenames,object@calibrationnames)]
+  x.new<- as.data.frame(newdesign[,c(object@controllablenames,object@calibrationnames)])
+  names(x.new) <- c(object@controllablenames,object@calibrationnames)
 #write to the files:
   write.table(x.new, file=paste(object@wd,"/inputs_pure.dat",sep=""),
               col.names=F, row.names=F)
@@ -32,7 +33,7 @@ predictcode.SAVE <- function(object, newdesign, n.iter, sampledraws, tol){
   write.table(model.matrix(object@meanformula, as.data.frame(object@dm)),
               file=paste(object@wd,"/predictionsI.design.old.matrix.dat",sep=""),
               col.names=F, row.names=F)
-	
+	  
   write.table(model.matrix(object@meanformula,x.new),
               file=paste(object@wd,"/predictionsI.design.new.matrix.dat",sep=""),
               col.names=F, row.names=F)
@@ -44,7 +45,7 @@ predictcode.SAVE <- function(object, newdesign, n.iter, sampledraws, tol){
               col.names=F, row.names=F)
   write.table(object@mle$thetaL, file=paste(object@wd,"/thetaL_mle.dat", sep=""),
               col.names=F, row.names=F)	
-
+	  
 #####
 #Values of the parameters:
 	printOutput<- 0
@@ -73,7 +74,6 @@ predictcode.SAVE <- function(object, newdesign, n.iter, sampledraws, tol){
 		dyn.load(lib.file)
 		cat(" -Loaded ", lib.file, "\n")
 	}
-	
 	#Call to the function:
 	output <- .C('predict_code',as.integer(printOutput),
 			as.integer(numInputs),
@@ -84,7 +84,6 @@ predictcode.SAVE <- function(object, newdesign, n.iter, sampledraws, tol){
                      as.character(workingPath))
 	#cat('The results can be found on ',workingPath,'\n')
 	#system(paste('ls ',workingPath,'*.dat',sep=''))
-
 	#Results are being stored in an object called results
 	#cat("Creating the object results\n")
     results<- new("predictcode.SAVE")
@@ -180,7 +179,7 @@ show.summary.predictcode.SAVE<- function(object){
 	print(object@call)
 	cat("---------------\n")
 	cat("Summary of results:\n")
-	if (!is.null(object@summariesmodelpred)){
+	if (!is.null(object@summariesmodelpred) || length(object@summariesmodelpred!=0)){
 		cat("---Model prediction-----\n")
 		print(object@summariesmodelpred)
 	}

@@ -46,7 +46,7 @@ The emulator of the computer model fitted by \code{SAVE} is used to predict valu
 	Returns an S4 object of the class \code{predictcode.SAVE} that contains the following slots:
   \item{newdesign }{ A copy of the design. }
   \item{samples }{ The matrix that contains the simulations (see details). }
-  \item{mle }{ A copy of the maximum likelihood estimator \code{object@mle}. }
+  \item{mle }{ A copy of the maximum likelihood estimate \code{object@mle}. }
   \item{predictcodecall }{ The call to this function. }
   \item{modelmean }{ The mean of the emulator (see details) at the new design \code{newdesign}. }
   \item{covmat }{ The covariance matrix of the emulator (see details) at the new design \code{newdesign}. }
@@ -54,9 +54,9 @@ The emulator of the computer model fitted by \code{SAVE} is used to predict valu
 }
 
 \details{
-The emulator of the computer model fitted by \code{SAVE} evaluated at the new input points specified in \code{newdesign} is a multivariate normal. Then \code{predictcode} returns the mean the covariance matrix and (if \code{sampledraws=TRUE}) and a simulated sample of size \code{n.iter} of this multivariate normal. A Cholesky decomposition is used to handle the covariance matrix and \code{tol} is used to define the tolerance in this decomposition.
+The emulator of the computer model fitted by \code{SAVE} evaluated at the new input points specified in \code{newdesign} is a multivariate normal. Then \code{predictcode} computes the mean, the covariance matrix and, if \code{sampledraws=TRUE}, a simulated sample of size \code{n.iter} from this multivariate normal. A pivotal Cholesky decomposition algorithm is used in the simulation of the samples and \code{tol} is a tolerance parameter in this algorithm.
 
-The object created can be explored with the functions \code{plot} and \code{summary}. The first plots a graphic with the mean and 95\% tolerance bounds of the emulator at each new input point. Furthermore, \code{summary} prints a matrix with the mean, the standard deviation and 95\% tolerance bounds of the emulator at each new entry point.
+The object created can be explored with the functions \code{plot} and \code{summary}. The first function plots a graphic with the mean and 95\% tolerance bounds of the emulator at each of the new input points. Furthermore, \code{summary} prints a matrix with the mean of the emulator at each new input point, the associated standard deviation, and 95\% tolerance bounds.
 }
 
 \author{ Jesus Palomo, Rui Paulo and Gonzalo Garcia-Donato. }
@@ -79,7 +79,10 @@ data(spotweldmodel,package='SAVE')
 # compute the corresponding mle estimates
 ##############
 
-gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), calibration.names=c("t"), field.data=spotweldfield, model.data=spotweldmodel, mean.formula=as.formula("~1"), bestguess=list(t=4.0))
+gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), 
+			 calibration.names=c("t"), field.data=spotweldfield,
+			 model.data=spotweldmodel, mean.formula=as.formula("~1"), 
+			 bestguess=list(t=4.0))
 
 ##########
 # emulate the output of the model using predictcode

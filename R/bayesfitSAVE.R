@@ -20,21 +20,31 @@ bayesfit.SAVE <- function (object, prior,mcmcMultmle=1,
 	
 	#####
 	#Write the file for the prior
-	if (!is.null(object@calibrationnames)){
-	if ((length(prior)/6)<length(object@calibrationnames))
+	if (!is.null(object@calibrationnames) && length(object@calibrationnames)!=0){
+		if ((length(prior)/6)<length(object@calibrationnames))
           {stop("Not enough prior distributions\n")}
-	if ((length(prior)/6)>length(object@calibrationnames))
+		if ((length(prior)/6)>length(object@calibrationnames))
           {stop("Too many prior distributions\n")}
-	prior.matrix<- matrix(0, ncol=length(object@calibrationnames), nrow=5)
-	colnames(prior.matrix)<- object@calibrationnames
-	for (i.name in object@calibrationnames){
-		thisplace<- which(prior==i.name)
-		prior.matrix[,i.name]<- as.numeric(prior[thisplace+1:5])
+		prior.matrix<- matrix(0, ncol=length(object@calibrationnames), nrow=5)
+		colnames(prior.matrix)<- object@calibrationnames
+		for (i.name in object@calibrationnames){
+			thisplace<- which(prior==i.name)
+			prior.matrix[,i.name]<- as.numeric(prior[thisplace+1:5])
+		}
+		object@prior <- t(prior.matrix)
+		write.table(object@prior, file=paste(object@wd,"/bounds.dat",sep=""),
+				col.names=F, row.names=F)
+	} else {
+		if (length(prior)!=0) print ("The specified priors for the calibration parameters will be deprecated")
+		aux <- which(names(object@bayesfitcall)=="prior")
+		object@bayesfitcall <- object@bayesfitcall[-aux]
+		prior.matrix <- matrix(0,0,0)
+		object@prior <- prior.matrix
+		#write.table(object@prior, file=paste(object@wd,"/bounds.dat",sep=""),
+		#		col.names=F, row.names=F)
 	}
-	object@prior <- t(prior.matrix)
-	write.table(object@prior, file=paste(object@wd,"/bounds.dat",sep=""),
-                    col.names=F, row.names=F)
-	}
+
+	
 
 	#####
 	#Values of the parameters:
@@ -65,8 +75,7 @@ bayesfit.SAVE <- function (object, prior,mcmcMultmle=1,
     #Call to the fucnction:
 	if ((object@method !=1) && (object@method != 2)){
 		stop ("Wrong type of method introduced as parameter")
-	}
-	else
+	}else
 	output <- .C('bayesfit',as.integer(printOutput),
                      as.integer(numInputs),as.integer(numCalibration),
                      as.integer(numPModel),as.integer(sizeData),
@@ -77,20 +86,21 @@ bayesfit.SAVE <- function (object, prior,mcmcMultmle=1,
 #cat('The results can be found on ',object@wd,'\n')
 #	system(paste('ls ',object@wd,'*.out',sep=''))
 
-	#info:
-	cat("Acceptance rate:",scan(file=paste(object@wd,"rate.out",sep="/"), 
+	if (!is.null(object@calibrationnames) && length(object@calibrationnames)!=0){
+		#info: Only in this case there are M-H steps
+		cat("Acceptance rate:",scan(file=paste(object@wd,"rate.out",sep="/"), 
 			quiet=T)[1],"\n")
+	}
      	 	
     #//////
 	post.thetaF<- read.table(file=paste(object@wd,"thetaF.out",sep="/"), header=F, 
                 col.names=c("lambdaB","lambdaF"))
 	
-	if (!is.null(object@calibrationnames)){
+	if (!is.null(object@calibrationnames) && length(object@calibrationnames)!=0){
 		post.calparams<- read.table(file=paste(object@wd,"ustar.out",sep="/"), 
 			 header=F, col.names=object@calibrationnames)
 		auxparams<- cbind(post.calparams,post.thetaF)
-	}
-	else auxparams<- post.thetaF
+	}else auxparams<- post.thetaF
     #burnin and thining:
     auxparams<- auxparams[-(1:n.burnin),]
 	auxparams<- auxparams[seq(from=1,to=dim(auxparams)[1], by=n.thin),]

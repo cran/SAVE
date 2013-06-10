@@ -7,7 +7,7 @@
 \description{ S4 class for Statistical Analysis and Validation Engine.}
 
 \section{Objects from the Class}{
-\code{SAVE} objects are created with the function \code{\link{SAVE}}. The information in a new created \code{SAVE} is complemented with the Bayesian fit when the function \code{bayesfit} is run.}
+Objects of this class are created and initialized with the function \code{\link{SAVE}} that computes the calculations needed for setting up the analysis. These can be completed with the function \code{\link[=bayesfit.SAVE]{bayesfit}} that performs the Bayesian analysis in the SAVE methodology}
 
 \section{Slots}{
 	 \describe{
@@ -45,8 +45,8 @@
   \describe{
     \item{summary}{A summary of the object created. }
     \item{show}{Prints the summary of the object. }
-    \item{plot}{See \code{"\link[=plot,SAVE-method]{plot}"}. }
-    \item{predictcode}{See \code{"\link[=plot,predictcode.SAVE-method]{predictcode}"}.}
+    \item{plot}{See \code{\link[=plot,SAVE-method]{plot}}. }
+    \item{predictcode}{See \code{\link[=predictcode]{predictcode}}.}
 	\item{bayesfit}{See \code{\link[=bayesfit.SAVE]{bayesfit}}.}
 	\item{predictreality}{See \code{\link[=predictreality.SAVE]{predictreality}}.}
 	\item{validate}{See \code{\link[=validate,SAVE-method]{validate}}.}

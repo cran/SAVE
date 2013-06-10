@@ -11,9 +11,7 @@
 
 predictreality.SAVE <- function(object, newdesign, n.burnin=0, n.thin=1, tol=1E-10){
 
-learn.names<- object@calibrationnames
-
-	if ((dim(object@mcmcsample)[1]-n.burnin)<=2*n.thin){stop("Burnin and/or thinin too large for the size of your mcmc sample\n")}
+	if ((dim(object@mcmcsample)[1]-n.burnin)<=2*n.thin){stop("Burnin and/or thinning too large for the size of your mcmc sample\n")}
 	postsamples<- object@mcmcsample
 
 ####################	
@@ -105,26 +103,32 @@ write.table(object@ym, file=paste(object@wd,"/model_data.dat",sep=""),
               col.names=F, row.names=F)
 
 #####
-#Write the file for the prior
-write.table(object@prior, file=paste(object@wd,"/bounds.dat",sep=""),
-                    col.names=F, row.names=F)
-
-# calibration parameters which we are supposed to sample from posterior
-
-  learn <- rep(0,length(object@calibrationnames))
-  j <- 1
-  for(i in learn.names){
-    learn <- learn + (learn.names[j]== object@calibrationnames)
-    j <- j+1
-  }
-
-  write.table(learn, file=paste(object@wd,"/learn.dat",sep=""),
-              col.names=F, row.names=F)
-
+	  
+#####
+#Write the files related with the priors and calibration parameters
   n.iter <- dim(postsamples)[1]
   howmanycal <- dim(postsamples)[2]-2
-  write.table(postsamples[,1:howmanycal], file=paste(object@wd,"/ustar.dat",sep=""),
+  if (length(object@calibrationnames) != 0) {
+	#####
+	#Write the file for the prior
+	write.table(object@prior, file=paste(object@wd,"/bounds.dat",sep=""),
+			  col.names=F, row.names=F)
+	  
+	# calibration parameters which we are supposed to sample from posterior
+	learn.names<- object@calibrationnames
+  	learn <- rep(0,length(object@calibrationnames))
+  	j <- 1
+  	for(i in learn.names){
+    	learn <- learn + (learn.names[j]== object@calibrationnames)
+    	j <- j+1
+  	}
+
+  	write.table(learn, file=paste(object@wd,"/learn.dat",sep=""),
               col.names=F, row.names=F)
+	write.table(postsamples[,1:howmanycal], file=paste(object@wd,"/ustar.dat",sep=""),
+			  col.names=F, row.names=F)
+  }
+  
   write.table(postsamples[,-(1:howmanycal)],
               file=paste(object@wd,"/thetaF.dat",sep=""),
               col.names=F, row.names=F)
