@@ -10,8 +10,9 @@
 \title{ Setting up the analysis of a computer model }
 \description{ Setting up the SAVE methodology: construction of an emulator of the computer model and estimation of the parameters of the Gaussian process for the bias function. }
 \usage{
-SAVE(response.name, controllable.names, calibration.names, field.data, model.data,
-             mean.formula, bestguess)
+SAVE(response.name=NULL, controllable.names=NULL, calibration.names=NULL, 
+	field.data=NULL, model.data=NULL, mean.formula=~1, bestguess=NULL,
+	kriging.controls=SAVE.controls())
 
 \S4method{show}{SAVE}(object)
 
@@ -26,10 +27,11 @@ SAVE(response.name, controllable.names, calibration.names, field.data, model.dat
   \item{field.data}{A \code{data.frame} with the observations coming from the field experiment. The column names of this \code{data.frame} should contain the \code{controllable.names} and the \code{response.name}.}
   \item{model.data}{A \code{data.frame} with the observations coming from runs of the computer model. The column names of this \code{data.frame} should contain the \code{controllable.names}, the \code{calibration.names} and the \code{response.name}.}
   \item{mean.formula}{A \code{formula} specifying the mean function of the Gaussian Process approximation to the output of the computer model (the emulator). Can only involve terms in \code{controllable.names}.}
-  \item{bestguess}{A named \code{list} specifying the best guess for the calibration parameters.} 
+  \item{bestguess}{A named \code{list} specifying the best guess for the calibration parameters.}
+  \item{kriging.controls}{A named \code{list} specifying the parameters to be passed to the kriging process at the stage I parameters (the ones invoved in the construction of the emulator) estimation step.}
   \item{object}{An object of the corresponding signature.}
-}  
-     
+}
+
 \details{ Based on computer model runs, \code{SAVE} fits an approximation of the model output, usually called an emulator. The emulator is constructed using the Gaussian process response technique (GASP), described in more detail in \code{\link[SAVE]{SAVE-class}}. Further, at this stage an estimation of the parameters of the Gaussian process specifying the bias function (difference between field observations and computer model outputs) is also performed. Some of the calculations are done using the package \code{DiceKriging}}
 
 \value{
@@ -54,11 +56,11 @@ Roustant O., Ginsbourger D. and Deville Y. (2012).
 
 
 \author{Jesus Palomo, Rui Paulo and Gonzalo Garcia-Donato}
-  
+
 \seealso{ \code{\link[=predictcode]{predictcode}},
-	  	  \code{\link[=bayesfit.SAVE]{bayesfit}}  
+	  	  \code{\link[=bayesfit.SAVE]{bayesfit}}
 }
-	
+
 \examples{
 \dontrun{
 library(SAVE)
@@ -75,10 +77,10 @@ data(spotweldmodel,package='SAVE')
 # compute the corresponding mle estimates
 ##############
 
-gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), 
-			 calibration.names=c("t"), field.data=spotweldfield, 
-			 model.data=spotweldmodel, mean.formula=as.formula("~1"), 
-			 bestguess=list(t=4.0))
+gfsw <- SAVE(response.name="diameter", controllable.names=c("current", "load", "thickness"),
+			 calibration.names="tuning", field.data=spotweldfield,
+			 model.data=spotweldmodel, mean.formula=~1,
+			 bestguess=list(tuning=4.0))
 
 # summary of the results
 
@@ -86,5 +88,3 @@ summary(gfsw)
 }
 
 }
-
-

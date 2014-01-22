@@ -1,18 +1,18 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
+#include <R.h>
 #include <R_ext/Print.h>
 
 #define DEATH {Rprintf("allocation failure in memory allocation\n");\
-               _exit(1);}
+               error(".\n");}
 
 int nrerror(char error_text[])
 {
-  void _exit();
-  
   REprintf("Numerical Recipes run-time error...\n");
   REprintf("%s\n",error_text);
   REprintf("...now exiting to system...\n");
-  _exit(1);
+  error(".\n");
 }
 
 float *vector(int nl, int nh)
@@ -75,14 +75,17 @@ int ***iarray3( int n1, int n2, int n3)
   int ***a, i, j;
   
   a = (int ***) malloc(n1 * sizeof(int **));
-  if(a == NULL) DEATH
+  if(a == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
 		  
   a[0] = (int **) malloc(n1 * n2 * sizeof(int *));
-  if(a[0] == NULL) DEATH
+  if(a[0] == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
   for(i=1;i<n1;i++) a[i] = a[i-1] + n2;
 
   a[0][0] = (int *) malloc(n1 * n2 * n3 * sizeof(int));
-  if(a[0][0] == NULL) DEATH
+  if(a[0][0] == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
   for(i=0;i<n1;i++) 
     for(j=0;j<n2;j++) 
       a[i][j] = a[0][0] + n2*n3*i + j*n3;
@@ -99,14 +102,17 @@ float ***array3(int n1, int n2, int n3)
   int i, j;
 
   a = (float ***) malloc(n1 * sizeof(float **));
-  if(a == NULL) DEATH
+  if(a == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
 
   a[0] = (float **) malloc(n1 * n2 * sizeof(float *));
-  if(a[0] == NULL) DEATH
+  if(a[0] == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
   for(i=1;i<n1;i++) a[i] = a[i-1] + n2;
 
   a[0][0] = (float *) malloc(n1 * n2 * n3 * sizeof(float));
-  if(a[0][0] == NULL) DEATH
+  if(a[0][0] == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
   for(i=0;i<n1;i++) 
     for(j=0;j<n2;j++) 
       a[i][j] = a[0][0] + n2*n3*i + j*n3;
@@ -123,14 +129,17 @@ double ***darray3(int n1, int n2, int n3)
   int  i, j;
 
   a = (double ***) malloc(n1 * sizeof(double **));
-  if(a == NULL) DEATH
+  if(a == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
 
   a[0] = (double **) malloc(n1 * n2 * sizeof(double *));
-  if(a[0] == NULL) DEATH
+  if(a[0] == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
   for(i=1;i<n1;i++) a[i] = a[i-1] + n2;
 
   a[0][0] = (double *) malloc(n1 * n2 * n3 * sizeof(double));
-  if(a[0][0] == NULL) DEATH
+  if(a[0][0] == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
   for(i=0;i<n1;i++) 
     for(j=0;j<n2;j++) 
       a[i][j] = a[0][0] + n2*n3*i + j*n3;
@@ -146,10 +155,12 @@ int **iarray2(int n1, int n2)
   int **a, i;
 
   a = (int **) malloc(n1 * sizeof(int *));
-  if(a == NULL) DEATH
+  if(a == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
 
   a[0] = (int *) malloc(n1 * n2 * sizeof(int));
-  if(a[0] == NULL) DEATH
+  if(a[0] == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
   for(i=1;i<n1;i++) a[i] = a[i-1] + n2;
 
   return a;
@@ -164,10 +175,12 @@ float **array2(int n1, int n2)
   int i;
 
   a = (float **) malloc(n1 * sizeof(float *));
-  if(a == NULL) DEATH
+  if(a == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
 
   a[0] = (float *) malloc(n1 * n2 * sizeof(float));
-  if(a[0] == NULL) DEATH
+  if(a[0] == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
   for(i=1;i<n1;i++) a[i] = a[i-1] + n2;
 
   return a;
@@ -182,10 +195,12 @@ double **darray2(int n1, int n2)
   int i;
 
   a = (double **) malloc((unsigned)n1 * sizeof(double *));
-  if(a == NULL) DEATH
+  if(a == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
 
   a[0] = (double *) malloc((unsigned)(n1*n2) * sizeof(double));
-  if(a[0] == NULL) DEATH
+  if(a[0] == NULL) {REprintf("allocation failure in memory allocation\n");
+        error(".\n");}
   for(i=1;i<n1;i++) a[i] = a[i-1] + n2;
 
   //Rprintf("Finished getting memory for a matrix %d x %d\n",n1,n2);

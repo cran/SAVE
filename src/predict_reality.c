@@ -370,15 +370,16 @@ void predict_reality(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *n
 
   /********** START ****************/
   int rank = 0;
+  int res;
   /********* LOOP ************************/
   for(state=0;state<sim;state++){
 	R_CheckUserInterrupt();
 
-    fscanf(fmcmc,"%lf",&thetaF[0]);
-    fscanf(fmcmc,"%lf",&thetaF[2*(pcont)+1]);
+    res = fscanf(fmcmc,"%lf",&thetaF[0]);
+    res = fscanf(fmcmc,"%lf",&thetaF[2*(pcont)+1]);
 
     for(j=0;j<pstar;j++){
-    	  fscanf(fu,"%lf",&ustar[j]);
+    	  res = fscanf(fu,"%lf",&ustar[j]);
     }
 
     if(state>burn && fmod((double) state, (double) thin)==0.){

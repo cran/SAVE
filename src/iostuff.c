@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "iostuff.h"
 #include "setup.h"
 #include <math.h>
+#include <R.h>
 #include <R_ext/Print.h>
 
 void dprintmat(double **a, int n, int m)
@@ -29,6 +31,8 @@ int dreadmat(char file[], double **a, int n, int m)
 */
 {
  FILE *fp;
+ int res;
+
  //Rprintf("Trying to read the file:  %s\n",file);
  if ((fp = fopen(file,"r"))==NULL){
    Rprintf("cannot open file \n");
@@ -38,7 +42,7 @@ int dreadmat(char file[], double **a, int n, int m)
  if (feof(fp)) Rprintf("eof");
    for(int i=0;i<n;i++){
      for(int j=0;j<m;j++) {
-       (void) fscanf(fp,"%lf",&a[i][j]);
+       res = fscanf(fp,"%lf",&a[i][j]);
      }
    }
  fclose(fp);
@@ -247,6 +251,7 @@ int ireadmat(char file[], int **a, int n, int m)
 */
 {
  FILE *fp;
+ int res;
  //Rprintf("Trying to read the file:  %s\n",file);
  if ((fp = fopen(file,"r"))==NULL){
    Rprintf("cannot open file \n");
@@ -256,7 +261,7 @@ int ireadmat(char file[], int **a, int n, int m)
  if (feof(fp)) Rprintf("eof");
    for(int i=0;i<n;i++){
      for(int j=0;j<m;j++) {
-       (void) fscanf(fp,"%d",&a[i][j]);
+       res = fscanf(fp,"%d",&a[i][j]);
        /* Rprintf("%f",a[i][j]); */
      }
    }
@@ -310,6 +315,7 @@ int readmat(char file[], float **a, int n, int m)
 */
 {
  FILE *fp;
+ int res;
  //Rprintf("Trying to read the file:  %s\n",file);
  if ((fp = fopen(file,"r"))==NULL){
    Rprintf("cannot open file \n");
@@ -319,7 +325,7 @@ int readmat(char file[], float **a, int n, int m)
  if (feof(fp)) Rprintf("eof");
    for(int i=0;i<n;i++){
      for(int j=0;j<m;j++) {
-       (void) fscanf(fp,"%f",&a[i][j]);
+       res = fscanf(fp,"%f",&a[i][j]);
        /* Rprintf("%f",a[i][j]); */
      }
    }
@@ -410,6 +416,7 @@ int dreadvec(char file[], double *v, int n)
 */
 {
  FILE *fp;
+ int res;
  //Rprintf("Trying to read the file:  %s\n",file);
  if ((fp = fopen(file,"r"))==NULL){
    Rprintf("cannot open file \n");
@@ -418,7 +425,7 @@ int dreadvec(char file[], double *v, int n)
 
  if (feof(fp)) Rprintf("eof");
    for(int i=0;i<n;i++){
-       (void) fscanf(fp,"%lf",&v[i]);
+       res = fscanf(fp,"%lf",&v[i]);
         //Rprintf("%lf ",v[i]);
    }
  fclose(fp);
@@ -444,6 +451,7 @@ int ireadvec(char file[], int *v, int n)
 */
 {
  FILE *fp;
+ int res;
  //Rprintf("Trying to read the file:  %s\n",file);
  if ((fp = fopen(file,"r"))==NULL){
    Rprintf("cannot open file \n");
@@ -452,7 +460,7 @@ int ireadvec(char file[], int *v, int n)
 
  if (feof(fp)) Rprintf("eof");
    for(int i=0;i<n;i++){
-       (void) fscanf(fp,"%d",&v[i]);
+       res = fscanf(fp,"%d",&v[i]);
        /* Rprintf("%f",v[i]); */
    }
  fclose(fp);
@@ -499,6 +507,7 @@ int readvec(char file[], float *v, int n)
 */
 {
  FILE *fp;
+ int res;
  //Rprintf("Trying to read the file:  %s\n",file);
  if ((fp = fopen(file,"r"))==NULL){
    Rprintf("cannot open file \n");
@@ -507,7 +516,7 @@ int readvec(char file[], float *v, int n)
 
  if (feof(fp)) Rprintf("eof");
  for(int i=0;i<n;i++){
-     (void) fscanf(fp,"%f",&v[i]);
+     res = fscanf(fp,"%f",&v[i]);
      /* Rprintf("%f",v[i]); */
  }
  fclose(fp);
@@ -641,6 +650,7 @@ int ireada3(char file[], int ***a, int n1, int n2, int n3)
 */
 {
  FILE *fp;
+ int res;
  //Rprintf("Trying to read the file:  %s\n",file);
  if ((fp = fopen(file,"r"))==NULL){
    Rprintf("cannot open file \n");
@@ -651,7 +661,7 @@ int ireada3(char file[], int ***a, int n1, int n2, int n3)
    for(int i1=0;i1<n1;i1++){
      for(int i2=0;i2<n2;i2++){
        for(int i3=0;i3<n3;i3++){
-         (void) fscanf(fp,"%d",&a[i1][i2][i3]);
+         res = fscanf(fp,"%d",&a[i1][i2][i3]);
          /* Rprintf("%d ",a[i1][i2][i3]); */ 
        }
      }
@@ -668,6 +678,7 @@ int reada3(char file[], float ***a, int n1, int n2, int n3)
 */
 {
  FILE *fp;
+ int res;
  //Rprintf("Trying to read the file:  %s\n",file);
  if ((fp = fopen(file,"r"))==NULL){
    Rprintf("cannot open file \n");
@@ -678,7 +689,7 @@ int reada3(char file[], float ***a, int n1, int n2, int n3)
    for(int i1=0;i1<n1;i1++){
      for(int i2=0;i2<n2;i2++){
        for(int i3=0;i3<n3;i3++){
-         (void) fscanf(fp,"%f",&a[i1][i2][i3]);
+         res = fscanf(fp,"%f",&a[i1][i2][i3]);
          /* Rprintf("%f ",a[i1][i2][i3]); */ 
        }
      }
@@ -752,8 +763,8 @@ int appenda3(char file[], float ***a, int n1, int n2, int n3)
  FILE *fp;
  //Rprintf("Trying to write file:  %s\n",file);
  if ((fp = fopen(file,"a"))==NULL){
-   Rprintf("cannot open %s \n",file);
-   _exit(1);
+   REprintf("cannot open %s \n",file);
+   error(".\n");
  }
 
  int count = 0;

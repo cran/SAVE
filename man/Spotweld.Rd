@@ -17,11 +17,11 @@ Details about this data set can be found in Bayarri et al (2007). }
 \format{
   Two data frame with observations on the following variables.
   \describe{
-    \item{\code{L}}{Controllable input (Load)}
-    \item{\code{C}}{Controllable input (The direct current of magnitude supplied to the sheets)}
-    \item{\code{G}}{Controllable input}
-    \item{\code{N}}{Response variable (Resistance)}
-    \item{\code{t}}{Calibration input (hence only in \code{spotweldmodel})}
+    \item{\code{load}}{Controllable input (Load)}
+    \item{\code{current}}{Controllable input (The direct current of magnitude supplied to the sheets)}
+    \item{\code{thickness}}{Controllable input}
+    \item{\code{diameter}}{Response variable (Resistance)}
+    \item{\code{tuning}}{Calibration input (hence only in \code{spotweldmodel})}
   }
 }
 \references{

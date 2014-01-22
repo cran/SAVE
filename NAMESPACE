@@ -1,10 +1,10 @@
 useDynLib(SAVE)
 
-import(coda,DiceKriging)
+import(coda,DiceKriging,methods)
 importFrom("DiceKriging", plot)
 
 ## S4
 exportClasses(SAVE,summary.SAVE,predictcode.SAVE,predictreality.SAVE,validate.SAVE)
 exportMethods(bayesfit,predictcode,predictreality,validate,show,summary)
 #export(SAVE,plot.SAVE, #show.SAVE,summary.SAVE,
-export(SAVE,uniform, normal,.deprecate.parameters,.expand.call)
+export(SAVE,SAVE.controls,plot.SAVE,plot.validate.SAVE,plot.predictcode.SAVE,plot.predictreality.SAVE,uniform,normal,.deprecate.parameters,.expand.call)

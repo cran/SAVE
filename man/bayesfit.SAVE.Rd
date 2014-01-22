@@ -90,16 +90,16 @@ data(spotweldmodel,package='SAVE')
 # compute the corresponding mle estimates
 ##############
 
-gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), 
-			 calibration.names=c("t"), field.data=spotweldfield, 
-			 model.data=spotweldmodel, mean.formula=as.formula("~1"), 
-			 bestguess=list(t=4.0))
+gfsw <- SAVE(response.name="diameter", controllable.names=c("current", "load", "thickness"), 
+			 calibration.names="tuning", field.data=spotweldfield, 
+			 model.data=spotweldmodel, mean.formula=~1, 
+			 bestguess=list(tuning=4.0))
 
 ##############
 # obtain the posterior distribution of the unknown parameters 
 ##############
 
-gfsw <- bayesfit(object=gfsw, prior=c(uniform("t", upper=8, lower=0.8)),
+gfsw <- bayesfit(object=gfsw, prior=c(uniform("tuning", upper=8, lower=0.8)),
 				 n.iter=20000, n.burnin=100, n.thin=2)
 
 # summary of the results

@@ -17,8 +17,8 @@ Synthetic data from a real experiment (\code{synthfield}) and another one contai
   Two data frame with observations on the following variables.
   \describe{
     \item{\code{y}}{Response}
-    \item{\code{x1}}{Controllable input}
-    \item{\code{x2}}{Calibration variable (only in \code{synthmodel})}
+    \item{\code{x}}{Controllable input}
+    \item{\code{v}}{Calibration variable (only in \code{synthmodel})}
   }
 }
 

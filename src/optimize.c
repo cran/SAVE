@@ -110,15 +110,15 @@ void optimize(int *FlagOutput, int *maxiter, double *Eps, double *Err, double *P
   }
   
 
-/* **********************************/
-/* compute the corresponding lambda
-/* **********************************/
+/* **********************************
+ * compute the corresponding lambda
+ * **********************************/
   double lambda;
   lambda = N*(1.-psi) / ( so2-psi*to2/(1.+(N-1.)*psi) );
   
-/* *****************************************/
-/* go back to the original parameterization
-/* *****************************************/
+/* *****************************************
+ * go back to the original parameterization
+ * *****************************************/
   
   // NOTICE that changing the order of the output will have consequences on
   // any routine that reads fileOut

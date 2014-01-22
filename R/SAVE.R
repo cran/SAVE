@@ -12,20 +12,45 @@
 `SAVE` <-
 function (response.name=NULL, controllable.names=NULL,
 			calibration.names=NULL,field.data=NULL,
-            model.data=NULL,mean.formula=as.formula("~1"),bestguess=NULL){
-             	
+            model.data=NULL,mean.formula=~1,bestguess=NULL,
+            kriging.controls = SAVE.controls()){
+
 	model <- new ("SAVE")
 	dprct <-.deprecate.parameters(call=sys.call(sys.parent(1)))
   	model@call <- as.call(dprct)
+    #print (model@call)
 
 	if (is.null(model.data) || length(model.data)==0)
 		stop ("Model data cannot be NULL\n")
 	
 	if (is.null(response.name) || length(response.name)==0)
 		stop ("Response name cannot be NULL\n")
+		
+	if (length(response.name)>1)
+		stop ("Response has to be univariate\n")
+
+	if (sum(response.name==controllable.names)>0 || sum(response.name==calibration.names)>0)
+		stop ("Response variable cannot be a calibration nor a controllable input\n")
+	
 	model@responsename <- as.character(response.name)
 	
-	#####
+    ####
+    # Processing the parameters for the kriging:
+     #krigingCall<- match.call(expand.dots=F)
+    #print(a)
+     #dots<-as.list(krigingCall$...)
+    #print(dots)
+    #cat("kriging.controls is:\n")
+    #print(kriging.controls)
+    #
+    # Now kriging.controls contains only those arguments that are allowed
+    # to be passed to DiceKriging.km()
+    # lower, upper, optim.method and parinit
+     #print("1")
+     #kriging.controls <- do.call("SAVE.controls",c(kriging.controls,dots))
+     #print("2")
+    
+    #####
 	#Field data:
   	if (is.null(field.data) || length(field.data)==0){
 		stop("Field data cannot be NULL\n")
@@ -74,10 +99,29 @@ function (response.name=NULL, controllable.names=NULL,
     ym <- as.vector(t(model.data[,model@responsename]))
     model@ym <- ym
 
- 	model@meanformula <- mean.formula 
+    #Detect if mean.formula contains terms that involve calibration inputs and remove them with a warning
+	#Also, keep the explicit expression for formula
+	mean.formula<- drop.response(as.formula(mean.formula), data=model.data[,c(controllable.names,calibration.names)])
+	if (!is.null(calibration.names) & length(calibration.names)>0){
+		termstoremove<- integer(0)
+		for (i in 1:length(calibration.names)){
+			termstoremove<- c(termstoremove, grep(calibration.names[i],attr(terms(mean.formula),"term.labels")))
+		}
+		if(length(termstoremove)>0){
+			warning("Terms involving calibration inputs have been suppressed in the mean formula\n")
+			mean.formula<- drop.terms(termobj=terms(mean.formula), dropx = termstoremove)
+			mean.formula<- reformulate(attr(terms(mean.formula), "term.labels"))
+		}
+	}
+
+ 	model@meanformula <- mean.formula
+
     ####
     # Estimate stage I parameters using DiceKriging
-    m <- km(model@meanformula,design=model@dm,response=model@ym,covtype="powexp")
+    #m <- km(model@meanformula,design=model@dm,response=model@ym,covtype="powexp")
+    # Now we have incorporated the possibility of controlling the parameters
+    # lower, upper, optim.method and parinit on km()
+    m <- do.call("km",c(list("formula"=model@meanformula,"design"=model@dm, "response"=model@ym,"covtype"="powexp"),kriging.controls))
     alphaM <- (m@covariance)@shape.val
     betaM <- ((m@covariance)@range.val)^(-alphaM)
     lambdaM <- 1/((m@covariance)@sd2)
@@ -263,7 +307,7 @@ function (response.name=NULL, controllable.names=NULL,
 ####################	
 #load some auxiliary functions
 normal<- function(var.name, mean, sd, lower, upper){
-	if ((upper >= lower) && (mean %in% lower:upper) && (sd >= 0))
+	if ((upper >= lower) && (mean >=lower) && (mean <= upper) && (sd >= 0))
 		c(var.name, 1, lower, upper, mean, sd^2)
 	else stop ("Error: the specified parameters are not appropriate for a normal.\n")
 }
@@ -292,15 +336,14 @@ uniform<- function(var.name, lower, upper){
 	if (names(frmls[length(frmls)])=='...') frmls <- frmls[-length(frmls)]
 	#print(names(ans))
 	#print(names(frmls))
-	deprct <- which(!(names(aans) %in% names(frmls)))
-	if (length(deprct) != 0) {
-		cat('Warning!: Deprecated parameters:\n')
-		print (as.character(names(aans)[deprct]))
-		ans <- ans[-(deprct+1)]
-	}
-	#return (deprct)
-	#return(call)
-	#print(ans)
-	return (ans)
+        deprct <- which(!(names(aans) %in% names(frmls)))
+        if (length(deprct) != 0) {
+                cat('Warning!: Deprecated parameters:\n')
+                print (as.character(names(aans)[deprct]))
+                ans <- ans[-(deprct+1)]
+        }
+        #return (deprct)
+        #return(call)
+        #print(ans)
+        return (ans)
 }
-

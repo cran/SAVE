@@ -534,15 +534,15 @@ reader to that paper for complete details on the application.
 
 In Figure~\ref{spot} you 
 can find a schematic representation of the spot welding process. Two
-sheets of metal of a particular thickness (\code{G}) are compressed by
+sheets of metal of a particular thickness (\code{thickness}) are compressed by
 two 
 electrodes under a certain 
-applied load (\code{L}). Electric current of magnitude \code{C} is
+applied load (\code{load}). Electric current of magnitude \code{current} is
 passed through 
 said electrodes and the heat produced by the current flow causes the
 surfaces under pressure to melt. After cooling, a weld nugget is
 formed and as a result the two metal sheets are welded together. The
-scientists are interested in the diameter of this nugget (\code{N}). 
+scientists are interested in the diameter of this nugget (\code{diameter}). 
 
 Included in the package are two datasets, \code{spotweldfield} and
 \code{spotweldmodel} that pertain, respectively, to field experiments
@@ -552,15 +552,15 @@ loaded using the commands \code{data(spotweldfield,package="SAVE")}
 and \code{data(spotweldmodel,package="SAVE")}.
 Notice that the columns of the data frames are appropriately named,
 and that the computer model features an additional input, named
-\code{t}, which is a calibration input related to contact resistance. 
+\code{tuning}, which is a calibration input related to contact resistance. 
 
 We start this analysis with setting up the problem by creating
 \code{sw}--- an object of the class 
 \code{SAVE-class}--- using the function \code{SAVE}:
 \begin{CodeInput}
-R> sw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"),
-+             calibration.names=c("t"), field.data=spotweldfield,
-+             model.data=spotweldmodel, mean.formula=as.formula("~1"),
+R> sw <- SAVE(response.name="diameter", controllable.names=c("current", "load", "thickness"),
++             calibration.names=c("tuning"), field.data=spotweldfield,
++             model.data=spotweldmodel, mean.formula=~1),
 +             bestguess=list(t=4.0))
 \end{CodeInput}
 
@@ -571,7 +571,7 @@ we are also
 \begin{itemize}
 \item setting the mean function of the Gaussian process approximation to the
 output of the computer model as a constant (with the option
-\code{mean.formula=as.formula("~1")}) and
+\code{mean.formula=~1)}) and
 \item providing an estimate of the vector of calibration inputs as a
   list (\code{bestguess}), which will be used in specifying the prior
   for $\n \theta^F$ 
@@ -596,14 +596,14 @@ Instead, we will proceed to fit the Bayesian model \eqref{eqreal}
 relating reality 
 to computer model. To do so, we use the function \code{bayesfit}:
 \begin{CodeInput}
-R> swbayes <- bayesfit(object=sw, prior=c(uniform("t", upper=8,
+R> swbayes <- bayesfit(object=sw, prior=c(uniform("tuning", upper=8,
 +                      lower=0.8)), n.iter=20000, n.burnin=100, 
 +                      n.thin=2)
 \end{CodeInput}
 We have created a new object --- \code{swbayes} --- but 
 instead we could have updated the object we have just created,
 \code{sw}. Notice that we need to specify a prior for the calibration
-parameter \code{t}, and also options pertaining to the MCMC
+parameter \code{tuning}, and also options pertaining to the MCMC
 algorithm. We have set a uniform prior for the calibration parameter,
 20000 iterations for the MCMC with a burn-in period of 100 iterations,
 and a thinning of 2. Other options were left at the corresponding
@@ -611,7 +611,7 @@ defaults --- cf Appendix~\ref{app.mcmc} for additional details.
 
 The object \code{swbayes} now contains not only the estimates
 previously computed using \code{SAVE} but also a sample from the
-posterior distribution of the calibration parameter \code{t} and of the
+posterior distribution of the calibration parameter \code{tuning} and of the
 field and bias precisions, $\lambda^F$ and $\lambda^b$,
 respectively. To display this information we can again 
 resort to the command \code{summary(swbayes)}. We can however also
@@ -662,7 +662,7 @@ example, please consider the following \proglang{R} code:
 \begin{CodeInput}
 R> load <- c(4.0,5.3); curr <- seq(from=20,to=30,length=20); g <- c(1,2)
 R> xnew <- as.data.frame(expand.grid(curr,load,g))
-R> names(xnew)<-c("C","L","G")
+R> names(xnew)<-c("current","load","thickness")
 R> 
 R> valsw <- validate(object=swbayes,newdesign=xnew,
 +                    calibration.value="mean",n.burnin=100)
@@ -724,15 +724,15 @@ low-level functions, \code{predictcode} and
 call these functions. We illustrate this in what follows.
 
 Imagine that one is interested in understanding how the nugget
-diameter \code{N} 
-varies with the current \code{C}. One might assess this variation by
-looking at the derivative of \code{N} with respect to \code{C}. Let's
-do that for \code{G}=1 and \code{L}=4. We start by predicting reality
-at an equally-spaced grid of \code{C} values between 20 and 30:
+diameter \code{diameter} 
+varies with the current \code{current}. One might assess this variation by
+looking at the derivative of \code{diameter} with respect to \code{current}. Let's
+do that for \code{thickness}=1 and \code{load}=4. We start by predicting reality
+at an equally-spaced grid of \code{current} values between 20 and 30:
 \begin{CodeInput}
-R> load <- 4; g <- 1; curr <- seq(from=20, to=30, length=80)
-R> xnew <- expand.grid(curr,load,g)
-R> names(xnew) <- c("C","L","G")
+R> aload <- 4; g <- 1; curr <- seq(from=20, to=30, length=80)
+R> xnew <- expand.grid(curr,aload,g)
+R> names(xnew) <- c("current","load","thickness")
 R>   
 R> prsw <- predictreality(object=swbayes, newdesign=xnew)
 \end{CodeInput}
@@ -762,7 +762,7 @@ in Figure~\ref{deriv}.
   \centering
   \includegraphics[scale=0.3]{deriv.pdf}
   \caption{Bias-corrected prediction of the derivative of \code{N}
-    with respect to \code{C} --- the estimate is the solid line; the
+    with respect to \code{current} --- the estimate is the solid line; the
     dashed lines are the 90\% tolerance bounds. The pure-model
     prediction is the dash-dotted line.}
   \label{deriv}
@@ -770,12 +770,12 @@ in Figure~\ref{deriv}.
 
 Additionally, we can use \code{predictcode} to obtain draws from the
 emulator evaluated at a posterior estimate of the calibration input,
-\code{t}. This allows us to produce the pure-model estimate of the
+\code{tuning}. This allows us to produce the pure-model estimate of the
 derivative:
 \begin{CodeInput}
-R> u <- 3.2; load <- 4; g <- 1; 
-R> xnewpure <- expand.grid(curr,load,g,u)
-R> names(xnewpure) <- c("C","L","G","t")
+R> u <- 3.2; aload <- 4; g <- 1; 
+R> xnewpure <- expand.grid(curr,aload,g,u)
+R> names(xnewpure) <- c("current","load","thickness","tuning")
 R>
 R> pmsw <- predictcode(object=swbayes,newdesign=xnewpure,n.iter=20000)
 R>

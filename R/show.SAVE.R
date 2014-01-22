@@ -117,7 +117,7 @@ plot.SAVE<- function(x, option="trace",...){
 			ncal<- dim(object@mcmcsample)[2]-2
 			#plot lambdaB
 			hs<- hist(object@mcmcsample[,ncal+1], col=gray(.85),border=gray(1), main="", 
-				 xlab=colnames(object@mcmcsample)[ncal+1], prob=T, breaks=20)
+				 xlab=expression(lambda^b), prob=T, breaks=20)
 			xpr<- seq(from=hs$breaks[1], to=hs$breaks[length(hs$breaks)],length=100)
 			ypr<- dexp(x=xpr,rate=1/(object@mle$thetaF['lambdaB']*object@mcmcMultmle))
 			lines(xpr, ypr, type="l", ...)
@@ -125,7 +125,7 @@ plot.SAVE<- function(x, option="trace",...){
 			print(object@mle$thetaF['lambdaB'])
 			#plot lambdaF
 			hs<- hist(object@mcmcsample[,ncal+2], col=gray(.85),border=gray(1), main="", 
-				 xlab=colnames(object@mcmcsample)[ncal+2], prob=T, breaks=20)
+				 xlab=expression(lambda^F), prob=T, breaks=20)
 			xpr<- seq(from=hs$breaks[1], to=hs$breaks[length(hs$breaks)],length=100)
 			ypr<- dexp(x=xpr,rate=1/(object@mle$thetaF['lambdaF']*object@mcmcMultmle))
 			lines(xpr, ypr, type="l", ...)

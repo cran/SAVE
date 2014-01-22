@@ -12,47 +12,71 @@ data(spotweldmodel,package='SAVE')
 # compute the corresponding mle estimates
 ##############
 
-gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), calibration.names=c("t"), field.data=spotweldfield, model.data=spotweldmodel, mean.formula=as.formula("~1"), bestguess=list(t=4.0))
+sw <- SAVE(response.name="diameter", controllable.names=c("current", "load", "thickness"), calibration.names=c("tuning"), field.data=spotweldfield, model.data=spotweldmodel, mean.formula=~1), bestguess=list(t=4.0))
 
 # summary of the results
 
-summary(gfsw)
+summary(sw)
 
 ##############
 # obtain the posterior distribution of the unknown parameters 
 ##############
 
-gfsw <- bayesfit(object=gfsw, prior=c(uniform("t", upper=8, lower=0.8)), n.iter=20000, n.burnin=100, n.thin=2)
+sw <- bayesfit(object=sw, prior=c(uniform("tuning", upper=8, lower=0.8)), n.iter=20000, n.burnin=100, n.thin=2)
 
 # summary of the results
-summary(gfsw)
+summary(sw)
 # traceplots
-plot(gfsw, option="trace", col=2)
+plot(sw, option="trace", col=2)
 # posterior of the calibration parameter
-plot(gfsw, option="calibration", col=4, lty=3)
+plot(sw, option="calibration", col=4, lty=3)
 # posterior of the measurement error precision and
 # bias function precision
-plot(gfsw, option="precision", col=2, lty=4)
+plot(sw, option="precision", col=2, lty=4)
 
 ##############
 # validate the computer model at chosen set of controllable
 # inputs
 ###############
 
-load <- c(4.0,5.3)
+aload <- c(4.0,5.3)
 curr <- seq(from=20,to=30,length=20)
 g <- c(1,2)
 
-xnew <- as.data.frame(expand.grid(curr,load,g))
-names(xnew)<-c("C","L","G")
+xnew <- as.data.frame(expand.grid(curr,aload,g))
+names(xnew)<-c("current”,"load”,"tuning")
 
-valsw <- validate(object=gfsw,newdesign=xnew,n.burnin=100)
+valsw <- validate(object=sw,newdesign=xnew,n.burnin=100)
 
 # summary of results
 summary(valsw)
 # plot results
 plot(valsw)
 
+# customized plot
+
+av <- (valsw@validate)[,"pure.model"]
+tau <- (valsw@validate)[,"tau.pm"] 
+
+par(oma=c(1,1,2,0),mfrow=c(2,2))
+for(i in 1:2){
+	for(j in 1:2){
+		v <- ((i-1)*40+(j-1)*20+1):((i-1)*40+j*20)
+		plot(curr,av[v],type="l",ylim=c(3,9),
+				xlab="current",ylab="weld diameter")
+		lines(curr,av[v]+tau[v],lty=3)
+		lines(curr,av[v]-tau[v],lty=3)
+		text(22,9,paste("g=",g[i],", L=“,aload[j],sep=""),cex=0.8,pos=1)
+		# field data that correspond to this situation
+		v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
+		data <- spotweldfield$N[v]
+		inputs <- spotweldfield$C[v]
+		points(inputs,data)
+		#dev.off()
+	}
+}
+mtext("Pure-model predictions",side=3,
+		outer=T,cex=1.2)
 
 ##########
 # emulate the output of the model using predictcode
@@ -60,16 +84,16 @@ plot(valsw)
 
 # construct design at which to emulate the model
 u <- 3.2
-load <- c(4.0,5.3)
+aload <- c(4.0,5.3)
 curr <- seq(from=20,to=30,length=20)
 g <- c(1,2)
 
-xnewpure <- expand.grid(curr,load,g)
+xnewpure <- expand.grid(curr,aload,g)
 xnewpure <- cbind(xnewpure,rep(u,dim(xnewpure)[1]))
-names(xnewpure) <- c("C","L","G","t")
+names(xnewpure) <- c("current","load","thickness","tuning")
 xnewpure <- as.data.frame(xnewpure)
 
-pcsw<- predictcode(object=gfsw, newdesign=xnewpure, n.iter=20000, tol=1.E-12)
+pcsw<- predictcode(object=sw, newdesign=xnewpure, n.iter=20000, tol=1.E-12)
 
 # Plot results
 paths <- pcsw@samples
@@ -91,7 +115,7 @@ for(i in 1:2){
     lines(curr,meanpure[v]+qtspure[v],lty=1,col=2)
     lines(curr,meanpure[v]-qtspure[v],lty=1,col=2)
     text(22,9,paste("gauge= ",g[i],", 
-    load=",load[j],sep=""),cex=0.8,pos=1)
+    aload=“,aload[j],sep=""),cex=0.8,pos=1)
     # simulation-based
     lines(curr,avpure[v],type="l",col=1,lty=3)
     lines(curr,qts[1,v],lty=3,col=1)
@@ -106,15 +130,15 @@ mtext("Emulate output of code at u = 3.20 - Spotweld Data",side=3,outer=T,cex=1.
 # using predictreality
 ##########
 
-load <- c(4.0,5.3)
+aload <- c(4.0,5.3)
 curr <- seq(from=20,to=30,length=20)
 g <- c(1,2)
 
-xnew <- as.data.frame(expand.grid(curr,load,g))
-names(xnew)<-c("C","L","G")
+xnew <- as.data.frame(expand.grid(curr,aload,g))
+names(xnew)<-c("current","load","thickness")
 
 # Obtain samples
-prsw <- predictreality(object=gfsw, newdesign=xnew, tol=1.E-12)
+prsw <- predictreality(object=sw, newdesign=xnew, tol=1.E-12)
 
 # Plot results
 # reality = model + bias
@@ -141,7 +165,7 @@ for(i in 1:2){
     lines(curr,av[v]+tau.real[v],lty=3)
     lines(curr,av[v]-tau.real[v],lty=3)
     text(22,9,paste("gauge= ",g[i],", 
-    load=",load[j],sep=""),cex=0.8,pos=1)
+    aload=“,aload[j],sep=""),cex=0.8,pos=1)
     # field data that correspond to this situation
     v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
     data <- spotweldfield$N[v]
@@ -174,7 +198,7 @@ for(i in 1:2){
         lines(curr,avpure[v]+tau.pure[v],lty=3)
         lines(curr,avpure[v]-tau.pure[v],lty=3)
 		text(22,9,paste("gauge= ",g[i],", 
-						load=",load[j],sep=""),cex=0.8,pos=1)
+						aload=“,aload[j],sep=""),cex=0.8,pos=1)
 # field data that correspond to this situation
 		v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
 		data <- spotweldfield$N[v]
@@ -207,7 +231,7 @@ for(i in 1:2){
 			 xlab="current",ylab="weld diameter")
         lines(curr,avpure[v]+tau.pure[v],lty=3)
         lines(curr,avpure[v]-tau.pure[v],lty=3)
-        title(main=paste("G=",g[i],", L=",load[j],sep=""),cex=0.8)
+        title(main=paste("thickness=",g[i],", load=“,aload[j],sep=""),cex=0.8)
 		
 		# field data that correspond to this situation
 		v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
@@ -243,3 +267,72 @@ for(i in 1:2){
 		points(inputs,data)
 	}
 }
+
+#####
+# another application - derivative wrt current
+#####
+
+# bias-corrected
+aload <- c(4.0)
+curr <- seq(from=20,to=30,length=80)
+g <- c(1)
+
+xnew <- expand.grid(curr,aload,g)
+names(xnew)<-c("current","load","thickness")
+
+# Obtain samples
+prdersw <- predictreality(object=sw, newdesign=xnew, tol=1.E-12)
+
+model <- prdersw@modelpred
+dmodel <- diff(t(model))/diff(curr)[1]
+
+bias <- prdersw@biaspred
+dbias <- diff(t(bias))/diff(curr)[1]
+
+dreal <- dmodel+dbias
+
+dav <- apply(dreal,1,mean)
+
+# tolerance bounds
+tmpdata <- matrix(dav,ncol=dim(dreal)[2],nrow=dim(dreal)[1],
+		byrow=F)
+tmpdata <- dreal - tmpdata
+tmpdata <- abs(tmpdata)
+tau.real <- apply(tmpdata,1,quantile,0.90)
+
+plot(curr[-1],dav,ty="l",ylim=c(min(dav-tau.real),max(dav+tau.real)))
+lines(curr[-1],dav+tau.real,lty=2)
+lines(curr[-1],dav-tau.real,lty=2)
+
+# pure-model prediction
+
+# construct design at which to emulate the model
+u <- 3.2
+aload <- 4.0
+curr <- seq(from=20,to=30,length=80)
+g <- 1
+xnewpure <- expand.grid(curr,aload,g,u)
+names(xnewpure) <- c("current","load","thickness","tuning")
+xnewpure <- as.data.frame(xnewpure)
+
+pcdersw <- predictcode(object=sw, newdesign=xnewpure, n.iter=20000, tol=1.E-12)
+
+samples <- pcdersw@samples
+dersamples <- diff(t(samples))/diff(curr)[1]
+dpure <- apply(dersamples,1,mean)
+dpureup <- apply(dersamples,1,quantile,0.975)
+dpurelow <- apply(dersamples,1,quantile,0.025)
+
+
+plot(curr[-1],dpure,ty="l",ylim=c(min(dpurelow),max(dpureup)))
+lines(curr[-1],dpureup,col=2)
+lines(curr[-1],dpurelow,col=2)
+
+# plot
+#pdf(file="deriv.pdf")
+plot(curr[-1],dav,ty="l",ylim=c(min(dav-tau.real), 
+				max(dav+tau.real)),xlab="current",ylab="derivative")
+lines(curr[-1],dav+tau.real,lty=2)
+lines(curr[-1],dav-tau.real,lty=2)
+lines(curr[-1],dpure,lty=4,lwd=2)
+#dev.off()

@@ -1,0 +1,7 @@
+Changes in version 0.9.3.7.1 (2013-11-26)
+
+CHANGES
+	* Modification of example data spotweld
+	* Allowing the user to specify certain parameteres to be passed on the first call to DiceKriging.km()
+
+

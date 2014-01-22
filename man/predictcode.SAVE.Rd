@@ -13,7 +13,7 @@
 
 %\alias{summary.predictcode.SAVE}
 %\alias{show.summary.predictcode.SAVE}
-%\alias{plot.predictcode.SAVE}
+\alias{plot.predictcode.SAVE}
 %\alias{predictcode.SAVE-class}
 
 %- Also NEED an '\alias' for EACH other topic documented here.
@@ -79,10 +79,10 @@ data(spotweldmodel,package='SAVE')
 # compute the corresponding mle estimates
 ##############
 
-gfsw <- SAVE(response.name="N", controllable.names=c("C", "L", "G"), 
-			 calibration.names=c("t"), field.data=spotweldfield,
-			 model.data=spotweldmodel, mean.formula=as.formula("~1"), 
-			 bestguess=list(t=4.0))
+gfsw <- SAVE(response.name="diameter", controllable.names=c("current", "load", "thickness"), 
+			 calibration.names="tuning", field.data=spotweldfield, 
+			 model.data=spotweldmodel, mean.formula=~1, 
+			 bestguess=list(tuning=4.0))
 
 ##########
 # emulate the output of the model using predictcode
@@ -96,7 +96,7 @@ g <- c(1,2)
 
 xnewpure <- expand.grid(curr,load,g)
 xnewpure <- cbind(xnewpure,rep(u,dim(xnewpure)[1]))
-names(xnewpure) <- c("C","L","G","t")
+names(xnewpure) <- c("current","load","thickness","tuning")
 xnewpure <- as.data.frame(xnewpure)
 
 pcsw<- predictcode(object=gfsw, newdesign=xnewpure, n.iter=20000, tol=1.E-12)

@@ -14,7 +14,6 @@
 ## ----------------
 
 ## SAVE Class
-
 setClass("SAVE", 		
          representation(
 			#data
