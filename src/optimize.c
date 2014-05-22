@@ -97,8 +97,8 @@ void optimize(int *FlagOutput, int *maxiter, double *Eps, double *Err, double *P
 
   //
   // THIS HAS TO BE DOUBLE CHECKED -29/06/2013-
-  //
-  if(err<=eps) {
+  // Changed 21/02/2014 (it was err<=eps)
+  if(err > eps) {
 	  psi = 0.0; // if no convergence
 	  Rprintf("\n WARNING: No convergence has been achieved after %d iterations\n",maxiterations);
 	  Rprintf(" WARNING: using the median instead \n");

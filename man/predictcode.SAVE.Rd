@@ -22,7 +22,7 @@
 The emulator of the computer model fitted by \code{SAVE} is used to predict values of the model at new input points.
 }
 \usage{
-\S4method{predictcode}{SAVE}(object, newdesign, n.iter=1000, sampledraws=T, tol=1e-10)
+\S4method{predictcode}{SAVE}(object, newdesign, n.iter=1000, sampledraws=T, tol=1e-10, verbose=FALSE)
 
 \S4method{summary}{predictcode.SAVE}(object)
 
@@ -37,6 +37,7 @@ The emulator of the computer model fitted by \code{SAVE} is used to predict valu
   \item{n.iter}{The number of simulations that are to be drawn from the emulator (see details below)}
   \item{sampledraws}{If TRUE a sample of size \code{n.iter} is obtained from the emulator. If FALSE only the covariance matrix and the mean of the emulator are returned.}
   \item{tol}{The tolerance in the Cholesky decomposition}
+  \item{verbose}{A \code{logical} value indicating the level of output as the function runs.}
   \item{...}{Extra arguments to be passed to the function (still not implemented).}
   \item{x}{ An object of class \code{predictcode.SAVE} }
 

@@ -253,15 +253,15 @@ void predict_code(int *FlagOutput,int *P, int *Q, int *nm,
 	
 	FILE *fF;
 	fF=fopen(krig,"w");
-	fprintf(fF,"");
+	fprintf(fF,"%s","");
 	fclose(fF); 
 
 	fF=fopen(mean_vecfile,"w");
-	fprintf(fF,"");
+	fprintf(fF,"%s","");
 	fclose(fF); 
 
 	fF=fopen(cov_matfile,"w");
-	fprintf(fF,"");
+	fprintf(fF,"%s","");
 	fclose(fF); 
 	
 	//stageonemle; /* if 0, there an mcmc sample from the posterior; if 1,
@@ -283,8 +283,10 @@ void predict_code(int *FlagOutput,int *P, int *Q, int *nm,
 		switch(stageonemle){
 		case 1:
 			if(i==0){
+                if (screen != 0) Rprintf("Before dgemv_ case 1\n");
 				dgemv_(trans,&q,&N,&onedouble,&X[0][0],&q,&thetaL[0], 
 					   &one,&zero,&mu[0],&one); /* mu=X theta^L */
+                if (screen != 0) Rprintf("After dgemv_ case 1\n");
 
 				getD(Z,D,N,theta,p);
 				getsigmas(theta,D,sigmas,N,p);
@@ -369,8 +371,10 @@ void predict_code(int *FlagOutput,int *P, int *Q, int *nm,
 			break;
 		case 0:
 			if(i>burn && fmod((double) i, (double) thin)==0.){
-				dgemv_(trans,&q,&N,&onedouble,&X[0][0],&q,&thetaL[0], 
+                if (screen != 0) Rprintf("Before dgemv_ case 2\n");
+				dgemv_(trans,&q,&N,&onedouble,&X[0][0],&q,&thetaL[0],
 					   &one,&zero,&mu[0],&one); /* mu=X theta^L */
+                if (screen != 0) Rprintf("After dgemv_ case 2\n");
 	  
 				getD(Z,D,N,theta,p);
 				getsigmas(theta,D,sigmas,N,p);

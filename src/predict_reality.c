@@ -347,7 +347,7 @@ void predict_reality(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *n
 
   FILE *fcal;
   fcal=fopen(filepath,"w"); // this is just to clear the file
-  fprintf(fcal,"");
+  fprintf(fcal,"%s","");
   fclose(fcal);
 	
 	

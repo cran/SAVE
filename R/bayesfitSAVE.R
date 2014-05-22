@@ -10,7 +10,7 @@
 ##########################################################################
 bayesfit.SAVE <- function (object, prior,mcmcMultmle=1,
 		     prob.prop=0.5, method=2, n.iter, nMH=20, n.burnin=0,
-         	 n.thin=1){
+         	 n.thin=1,verbose=FALSE){
     	 	
 	# To deprecate the unused parameters and to include in the 
 	# call() all the default parameters not used in the call
@@ -44,22 +44,135 @@ bayesfit.SAVE <- function (object, prior,mcmcMultmle=1,
 		#		col.names=F, row.names=F)
 	}
 
-	
+    ## Beginning of bayesfit
+    
+    ####################
+	#load some auxiliary functions
+	duplicates <- function(dat)
+	{
+		s <- do.call("order", as.data.frame(dat))
+		if(dim(as.matrix(dat))[2]==1){
+			non.dup <- !duplicated(as.matrix(dat[s]))
+		}
+		else{
+			non.dup <- !duplicated(as.matrix(dat[s,]))
+		}
+		orig.ind <- s[non.dup]
+		first.occ <- orig.ind[cumsum(non.dup)]
+		#first.occ[non.dup] <- NA
+		first.occ[order(s)]
+	}
+	###############end of loading auxiliary functions.
+
+    #####
+    #Field data:
+    #Select those columns corresponding to the controllable inputs:
+    # x<- field.data[,object@controllablenames]
+    #Extract the unique part of the field design matrix as required by bayesfit:
+	if(!object@constant.controllables){
+    	x.unique <- as.data.frame(unique(object@df))
+    	names(x.unique) <- object@controllablenames
+    	my.original <- duplicates(object@df)
+    	yf.ordered <- numeric(0)
+    	nreps <- NULL
+    	for (i in unique(my.original)){
+        	yf.ordered <- c(yf.ordered,object@yf[my.original==i])
+        	nreps <- c(nreps, sum(my.original==i))
+    	}
+	}
+	else{
+		x.unique<- as.data.frame(1)
+		nreps<- length(object@yf)
+		yf.ordered<- object@yf
+	}
+		
+    
+	#Write to the files
+	#file field_data.dat:
+	write.table(yf.ordered, file=paste(object@wd,"/field_data.dat", sep=""),
+                col.names=F, row.names=F)
+    
+	#file field_nreps.dat:
+	write.table(nreps, file=paste(object@wd,"/field_nreps.dat", sep=""),
+                col.names=F, row.names=F)
+    
+	#file field_unique.dat:
+	write.table(x.unique, file=paste(object@wd,"/field_unique.dat",sep=""),
+                col.names=F, row.names=F)
+	#####
+	#####
+	#Model data:
+	write.table(as.data.frame(object@dm), file=paste(object@wd,"/model_inputs.dat",sep=""),
+                col.names=F, row.names=F)
+    
+	write.table(as.vector(object@ym),
+                file=paste(object@wd,"/model_data.dat",sep=""),
+                col.names=F, row.names=F)
+
+    #####
+    #####
+    #Mean response:
+    write.table(object@xm,file=paste(object@wd,"/mcmc.field.design.M.matrix.dat",sep=""),
+                col.names=F, row.names=F)
+    write.table(object@xf,file=paste(object@wd,"/mcmc.field.design.F.matrix.dat",sep=""),
+                col.names=F, row.names=F)
+    #####
+    if (!object@constant.controllables){dthetaM <- length(object@calibrationnames) + length(object@controllablenames)}
+    else{dthetaM <- length(object@calibrationnames)}
+
+    dthetaM <- dthetaM*2+1
+    dthetaL <- ncol(object@xm)
+
+    if (!object@constant.controllables){dthetaF <- 2*length(object@controllablenames)+2}
+    else{dthetaF <- 2}
+
+    if(length(object@mle$thetaM)!=dthetaM)
+        {#object@mle<- NULL;
+            stop("Dimension of MLE for the covariance of the computer model is incorrect\n")}
+    if(length(object@mle$thetaL)!=dthetaL)
+        {#object@mle<- NULL;
+            stop("Dimension of MLE for the mean of the computer model is incorrect\n")}
+    if(length(object@mle$thetaF)!=dthetaF)
+        {#object@mle<- NULL;
+            stop("Dimension of MLE for the second stage parameters is incorrect\n")}
+
+    #####
+    #Write the MLE to the appropriate files
+    write.table(object@mle$thetaM, file=paste(object@wd,"/thetaM_mle.dat", sep=""),
+                col.names=F, row.names=F)
+    write.table(object@mle$thetaL, file=paste(object@wd,"/thetaL_mle.dat", sep=""),
+                col.names=F, row.names=F)
+    if (!object@constant.controllables){
+        write.table(object@mle$thetaF, file=paste(object@wd,"/thetaF_mle.dat", sep=""),
+                    col.names=F, row.names=F)}
+    else{
+        thetaFF<- c(object@mle$thetaF[1],1.0,2.0,object@mle$thetaF[2])
+        write.table(thetaFF, file=paste(object@wd,"/thetaF_mle.dat", sep=""),
+                    col.names=F, row.names=F)
+    }
+
 
 	#####
 	#Values of the parameters:
-	printOutput<- 0
 	#total number of inputs:
-	numInputs<- length(c(object@controllablenames,object@calibrationnames))
-	#number of calibration inputs:
+    if (!object@constant.controllables){
+        numInputs<- length(c(object@controllablenames,object@calibrationnames))
+		#dimension of field design unique inputs (NF in Rui''s notation)
+		sizeField<- dim(object@xf)[1]
+    }
+    else{
+        numInputs<- length(object@calibrationnames)
+		#dimension of field design unique inputs (NF in Rui''s notation)
+		sizeField<- 1
+    }
+    #number of calibration inputs:
 	numCalibration<- length(object@calibrationnames)
 	#dimension of the linear model for the mean of the GP prior
 	#        (q in C notation)
 	numPModel<- dim(object@xm)[2]
 	#dimension of code design (NM in C notation)
+
 	sizeData<- length(object@ym)
-#dimension of field design unique inputs (NF in Rui''s notation)
-	sizeField<- dim(object@xf)[1]
 #Probability of sampling from the prior
 	object@method <- method
 	object@mcmcMultmle <- mcmcMultmle
@@ -76,7 +189,7 @@ bayesfit.SAVE <- function (object, prior,mcmcMultmle=1,
 	if ((object@method !=1) && (object@method != 2)){
 		stop ("Wrong type of method introduced as parameter")
 	}else
-	output <- .C('bayesfit',as.integer(printOutput),
+	output <- .C('bayesfit',as.integer(verbose),
                      as.integer(numInputs),as.integer(numCalibration),
                      as.integer(numPModel),as.integer(sizeData),
                      as.integer(sizeField),as.double(prob.prop),
@@ -107,15 +220,16 @@ bayesfit.SAVE <- function (object, prior,mcmcMultmle=1,
 	row.names(auxparams)<- 1:(dim(auxparams)[1])
 	object@mcmcsample <- as.matrix(auxparams)
 	
+	unlink(paste0(object@wd,'/*'))
 
-	object
+	return(object)
 }
 
 if(!isGeneric("bayesfit")) {
   setGeneric(name = "bayesfit",
              def = function(object, prior,mcmcMultmle=1,
 		     prob.prop=0.5, method=2, n.iter, nMH=20, n.burnin=0,
-         	 n.thin=1,...) standardGeneric("bayesfit")
+         	 n.thin=1,verbose=FALSE,...) standardGeneric("bayesfit")
              )
 }
 
@@ -128,7 +242,7 @@ setMethod("bayesfit", "SAVE",
 			 bayesfit.SAVE(object=object, prior=prior,
 			 n.iter = n.iter, mcmcMultmle=mcmcMultmle,
 		     prob.prop=prob.prop, method=method, nMH=nMH, n.burnin=n.burnin,
-         	 n.thin=n.thin)
+         	 n.thin=n.thin,verbose=verbose)
           }
           )
           

@@ -14,16 +14,18 @@
 ## ----------------
 
 ## SAVE Class
+
 setClass("SAVE", 		
          representation(
 			#data
 			 responsename="character",      ##name of the response
 			 controllablenames="character", ##names of the controllable inputs
+			 constant.controllables="logical", ##whether the controllable inputs are constant T or not F. Default in the Code is F.
 			 calibrationnames="character",  ##names of the calibration inputs
 			 df="matrix",                   ##field design (no replicates) 
 			 dm="matrix",                   ##model design
 			 ym="numeric",                  ##model response associated with dm
-			 yf="numeric",                  ##field response associated with df	
+			 yf="numeric",                  ##field response associated with df
 			#mle fit
 			 meanformula="formula",         ##linear model for the mean of the GP
 			 mle="list",                    ##three components: thetaL, thetaM, thetaF

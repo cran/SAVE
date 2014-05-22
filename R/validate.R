@@ -9,9 +9,18 @@
 ##    
 ##########################################################################
 
-validate.SAVE <- function(object, newdesign, calibration.value="mean", prob=0.90, n.burnin=0, n.thin=1, tol=1E-10){
+validate.SAVE <- function(object, newdesign=NULL, calibration.value="mean", prob=0.90, n.burnin=0, n.thin=1, tol=1E-10){
 
-	tmp<- predictreality(object=object, newdesign=newdesign, n.burnin=n.burnin, n.thin=n.thin, tol=tol)
+	if (object@constant.controllables && (!is.null(newdesign))){
+		stop("In the situation with constant controllable inputs, newdesign should be set to NULL.") 
+	}
+	
+	if (!object@constant.controllables){
+		tmp<- predictreality(object=object, newdesign=newdesign, n.burnin=n.burnin, n.thin=n.thin, tol=tol)
+	}
+	else{
+		tmp<- predictreality(object=object, n.burnin=n.burnin, n.thin=n.thin, tol=tol)
+	}
 	reality<- (tmp@biaspred+tmp@modelpred)
 	meanreality<- apply(X=reality, MARGIN=2, FUN=mean)
 	
@@ -37,9 +46,24 @@ validate.SAVE <- function(object, newdesign, calibration.value="mean", prob=0.90
 			calibration.value<- vapply(calibration.value, FUN=function(x){x[1]}, FUN.VALUE=c(0))[object@calibrationnames]
 		}
 
-		newdesignpure<- cbind(newdesign, matrix(calibration.value, nrow=dim(newdesign)[1], byrow=T))
+		if (!object@constant.controllables){
+		newdesignpure<- cbind(newdesign, matrix(calibration.value, nrow=dim(newdesign)[1], ncol=length(calibration.value), byrow=T))
 		names(newdesignpure) <- c(names(newdesign),object@calibrationnames)
-	} else newdesignpure <- newdesign
+		}
+		else{
+		newdesignpure<- matrix(calibration.value, nrow=1, ncol=length(calibration.value), byrow=T)
+		colnames(newdesignpure) <- object@calibrationnames
+		newdesignpure<- as.data.frame(newdesignpure)
+		}
+	} 
+	else 
+		if (!object@constant.controllables){
+	    newdesignpure <- newdesign
+		}
+		else{
+		newdesignpure <- NULL
+		}
+
 	puremodel<- predictcode(object=object, newdesign=newdesignpure, n.iter=10, sampledraws=F, tol=tol)@modelmean
 		
 	# tolerance bounds
@@ -69,17 +93,22 @@ validate.SAVE <- function(object, newdesign, calibration.value="mean", prob=0.90
 		result@validatecall <- result@validatecall[-aux]
 	}
 	
-	result@newdesign<- newdesign
 	result@validate<- cbind(meanreality, tau.real, puremodel, tau.pure, bias, biasL, biasU)
 	colnames(result@validate)<- c("bias.corrected", "tau.bc", "pure.model", "tau.pm", "bias", "bias.Lower", "bias.Upper")
-	rownames(result@validate)<- rownames(newdesign)
+	if (!object@constant.controllables){
+		rownames(result@validate)<- rownames(newdesign)
+		result@newdesign<- newdesign		
+	}
+	else{rownames(result@validate)<- 1}
+	
+	unlink(paste0(object@wd,'/*'))
 	
 	return(result)
 }
 
 if(!isGeneric("validate")) {
 	setGeneric(name = "validate",
-			def = function(object, newdesign, calibration.value="mean",
+			def = function(object, newdesign=NULL, calibration.value="mean",
 					prob=0.90, n.burnin=0, n.thin=1, tol=1E-10,...) 
 				standardGeneric("validate")
 	)

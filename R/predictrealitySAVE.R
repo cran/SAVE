@@ -9,10 +9,14 @@
 ##    
 ##########################################################################
 
-predictreality.SAVE <- function(object, newdesign, n.burnin=0, n.thin=1, tol=1E-10){
+predictreality.SAVE <- function(object, newdesign=NULL, n.burnin=0, n.thin=1, tol=1E-10,verbose=F){
 
 	if ((dim(object@mcmcsample)[1]-n.burnin)<=2*n.thin){stop("Burnin and/or thinning too large for the size of your mcmc sample\n")}
 	postsamples<- object@mcmcsample
+	
+	if (object@constant.controllables && (!is.null(newdesign))){
+		stop("In the situation with constant controllable inputs, newdesign should be set to NULL.") 
+	}
 
 ####################	
 #load some auxiliary functions
@@ -35,17 +39,24 @@ predictreality.SAVE <- function(object, newdesign, n.burnin=0, n.thin=1, tol=1E-
 #####
 #Field data:
 #Select those columns corresponding to the controllable inputs:
-  x<- object@df
+#  x<- object@df
 #Extract the unique part of the field design matrix as required by bayesfit:
-  x.unique<- as.data.frame(unique(x))
-  names(x.unique)<- object@controllablenames
-  my.original<- duplicates(x)
-  yf<- object@yf
-  yf.ordered<- numeric(0); nreps<- NULL
-  for (i in unique(my.original)){
-    yf.ordered<- c(yf.ordered,yf[my.original==i])
-    nreps<- c(nreps, sum(my.original==i))
-  }
+if(!object@constant.controllables){
+	x.unique <- as.data.frame(unique(object@df))
+	names(x.unique) <- object@controllablenames
+	my.original <- duplicates(object@df)
+	yf.ordered <- numeric(0)
+	nreps <- NULL
+	for (i in unique(my.original)){
+    	yf.ordered <- c(yf.ordered,object@yf[my.original==i])
+    	nreps <- c(nreps, sum(my.original==i))
+	}
+}
+else{
+	x.unique<- as.data.frame(1)
+	nreps<- length(object@yf)
+	yf.ordered<- object@yf
+}
 
 #Write to the files
 #file field_data.dat:
@@ -81,16 +92,22 @@ write.table(object@ym, file=paste(object@wd,"/model_data.dat",sep=""),
 #####
 
 # Design at which to predict
-
+if(!object@constant.controllables){
   x.new <- as.data.frame(newdesign[,object@controllablenames])
   names(x.new)<- object@controllablenames
   write.table(x.new, file=paste(object@wd,"/inputs_real.dat",sep=""),
               col.names=F, row.names=F)
-#Mean responses:
+  #Mean responses:
   meannew <- model.matrix(object@meanformula, x.new)
   write.table(meannew,
               file=paste(object@wd,"/predictionsII.design.M.new.matrix.dat",sep=""),
+              col.names=F, row.names=F)}
+else{
+  write.table(1, file=paste(object@wd,"/inputs_real.dat",sep=""),
               col.names=F, row.names=F)  
+  write.table(1,file=paste(object@wd,"/predictionsII.design.M.new.matrix.dat",sep=""),
+			              col.names=F, row.names=F)
+	}  
 #####
 
 #####
@@ -135,9 +152,22 @@ write.table(object@ym, file=paste(object@wd,"/model_data.dat",sep=""),
 
 #####
 #Values of the parameters:
-	printOutput<- 0
+	if (!object@constant.controllables){
+    	numInputs<- length(c(object@controllablenames,object@calibrationnames))
+		#dimension of field design unique inputs (NF in Rui''s notation)
+		sizeField<- dim(object@xf)[1]
+		sizeNewData <- dim(x.new)[1]
+		sizeNewField<- dim(x.new)[1]		
+	}
+	else{
+    	numInputs<- length(object@calibrationnames)
+		#dimension of field design unique inputs (NF in Rui''s notation)
+		sizeField<- 1
+		sizeNewData <- 1
+		sizeNewField<- 1				
+	}
+
 	#total number of inputs:
-	numInputs<- length(c(object@controllablenames,object@calibrationnames))
 	#number of calibration inputs:
   	numCalibration<- length(object@calibrationnames)
 	#dimension of the linear model for the mean of the GP prior
@@ -145,11 +175,7 @@ write.table(object@ym, file=paste(object@wd,"/model_data.dat",sep=""),
 	numPModel<- dim(object@xm)[2]
 	#dimension of code design (Nold in C's notation)
 	sizeData<- length(object@ym)
-	#dimension of field design unique inputs (NF in C's notation)
-  	sizeField<- dim(x.unique)[1]
 	#dimension of new code design (Nnew in C's notation)
-	sizeNewData <- dim(x.new)[1]
-	sizeNewField<- dim(x.new)[1]
 	#tolerance for the pivoting algorithm
 	tolerance <- tol
 	workingPath<- object@wd
@@ -164,7 +190,7 @@ write.table(object@ym, file=paste(object@wd,"/model_data.dat",sep=""),
   
 #Call to the function:
   output <- .C('predict_reality',
-			 as.integer(printOutput),as.integer(numInputs),as.integer(numCalibration),
+			 as.integer(verbose),as.integer(numInputs),as.integer(numCalibration),
                  as.integer(numPModel),as.integer(sizeData),
                  as.integer(sizeField),as.integer(sizeNewData),as.integer(sizeNewField), as.double(tolerance),
                  as.integer(n.iter),
@@ -184,27 +210,35 @@ write.table(object@ym, file=paste(object@wd,"/model_data.dat",sep=""),
   dprct <- .deprecate.parameters(call=sys.call(sys.parent(1)))
   #print(dprct)
   results@predictrealitycall<- as.call(dprct)
-  
-  results@modelpred<- samples[,1:(dim(samples)[2]/2)]
+  results@modelpred<- as.data.frame(samples[,1:(dim(samples)[2]/2)])
+  results@biaspred<- as.data.frame(samples[,((dim(samples)[2]/2)+1):dim(samples)[2]])
+
+if (!object@constant.controllables){
   colnames(results@modelpred)<- rownames(newdesign)
-  results@biaspred<- samples[,((dim(samples)[2]/2)+1):dim(samples)[2]]
   colnames(results@biaspred)<- rownames(newdesign)
-
   results@newdesign<- newdesign
-  return(results)
+}
+else{
+  colnames(results@modelpred)<- 1
+  colnames(results@biaspred)<- 1
+}
 
+	unlink(paste0(object@wd,'/*'))
+	return(results)
 }
 
 if(!isGeneric("predictreality")) {
   setGeneric(name = "predictreality",
-             def = function(object, newdesign,
-                           n.burnin=0, n.thin=1, tol=1E-10,...) standardGeneric("predictreality")
+             def = function(object, newdesign=NULL,
+                           n.burnin=0, n.thin=1, tol=1E-10, verbose=FALSE, ...) 
+			 standardGeneric("predictreality")
              )
 }
 
 setMethod("predictreality", "SAVE", 
           function(object, newdesign,...) {
-            predictreality.SAVE(object=object, newdesign=newdesign ,n.burnin=n.burnin, n.thin=n.thin, tol=tol)
+            predictreality.SAVE(object=object, newdesign=newdesign ,n.burnin=n.burnin, n.thin=n.thin, 
+								tol=tol,verbose=verbose)
           }
           )
 

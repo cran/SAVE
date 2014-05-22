@@ -7,9 +7,8 @@
 \title{ Bayesian fit }
 \description{ Bayesian analysis of a computer model: obtaining the posterior distribution of the unknown parameters in the statistical model of Bayarri et al. (2007). }
 \usage{
-\S4method{bayesfit}{SAVE}(object, prior, mcmcMultmle=1, prob.prop=0.5, method=2, 
-				  n.iter, nMH=20, n.burnin=0, n.thin=1, ...)
-}
+\S4method{bayesfit}{SAVE}(object, prior, mcmcMultmle=1, prob.prop=0.5,
+         method=2,n.iter, nMH=20, n.burnin=0, n.thin=1, verbose=FALSE, ...)}
 \arguments{
   \item{object}{An object of class \code{SAVE} normally produced by a call to function \code{\link{SAVE}}.}
   \item{prior}{The prior distribution assumed for the calibration parameters. This should be specified concatenating, \code{c}, calls to functions \code{\link{uniform}} and/or \code{\link{normal}}. See details below.}
@@ -20,6 +19,7 @@
   \item{nMH}{Number of Metropolis-Hastings steps. See details below.} 
   \item{n.burnin}{The number of iterations at the beginning of the MCMC that are thrown away. See details below.} 
   \item{n.thin}{The thinning to be applied to the resulting MCMC sample. See details below.}
+  \item{verbose}{A \code{logical} value indicating the level of output as the function runs.}
   \item{...}{Extra arguments to be passed to the function (still not implemented).}
 }  
      

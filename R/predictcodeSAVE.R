@@ -9,7 +9,7 @@
 ##    
 ##########################################################################
 
-predictcode.SAVE <- function(object, newdesign, n.iter, sampledraws, tol){
+predictcode.SAVE <- function(object, newdesign, n.iter, sampledraws, tol,verbose=FALSE){
 #####
 #Model data:
 #write to the files:
@@ -21,8 +21,13 @@ predictcode.SAVE <- function(object, newdesign, n.iter, sampledraws, tol){
 
 #####
 #New design
-  x.new<- as.data.frame(newdesign[,c(object@controllablenames,object@calibrationnames)])
-  names(x.new) <- c(object@controllablenames,object@calibrationnames)
+  if (!object@constant.controllables){ #Case 1
+	x.new <- as.data.frame(newdesign[,c(object@controllablenames,object@calibrationnames)])
+  	names(x.new) <- c(object@controllablenames,object@calibrationnames)
+  } else{ #Case 2: Constant controllable inputs
+	x.new <- as.data.frame(newdesign[,object@calibrationnames])
+    names(x.new) <- object@calibrationnames
+  }
 #write to the files:
   write.table(x.new, file=paste(object@wd,"/inputs_pure.dat",sep=""),
               col.names=F, row.names=F)
@@ -48,9 +53,13 @@ predictcode.SAVE <- function(object, newdesign, n.iter, sampledraws, tol){
 	  
 #####
 #Values of the parameters:
-	printOutput<- 0
 	#total number of inputs:
-	numInputs<- length(c(object@controllablenames,object@calibrationnames))
+    if (!object@constant.controllables){
+        numInputs<- length(c(object@controllablenames,object@calibrationnames))
+    }
+    else{
+        numInputs<- length(object@calibrationnames)
+    }
 	#dimension of the linear model for the mean of the GP prior
 	#        (q in C notation)
 	numPModel<- dim(object@xm)[2]
@@ -75,7 +84,7 @@ predictcode.SAVE <- function(object, newdesign, n.iter, sampledraws, tol){
 		cat(" -Loaded ", lib.file, "\n")
 	}
 	#Call to the function:
-	output <- .C('predict_code',as.integer(printOutput),
+	output <- .C('predict_code',as.integer(verbose),
 			as.integer(numInputs),
                    as.integer(numPModel),as.integer(sizeData),
                      as.integer(sizeNewData),
@@ -122,6 +131,9 @@ predictcode.SAVE <- function(object, newdesign, n.iter, sampledraws, tol){
     results@newdesign <- newdesign
 	results@modelmean<- as.vector(scan(file=paste(object@wd,"mean_vector.dat",sep=""),quiet=T))
 	results@covmat<- as.matrix(read.table(file=paste(object@wd,"cov_mat.dat",sep="")),header=F)
+
+	unlink(paste0(object@wd,'/*'))
+
 	return(results)
 }
 
@@ -133,9 +145,9 @@ if(!isGeneric("predictcode")) {
 
 setMethod("predictcode", "SAVE",
 	#signature(object="SAVE",newdesign="data.frame",n.iter="missing",sampledraws="missing"),
-          definition=function(object, newdesign,n.iter=1000,sampledraws=T,tol=1E-10) {
+          definition=function(object, newdesign,n.iter=1000,sampledraws=T,tol=1E-10,verbose=FALSE) {
             predictcode.SAVE(object = object, newdesign=newdesign, n.iter=n.iter,
-				sampledraws=sampledraws,tol=tol)
+				sampledraws=sampledraws,tol=tol,verbose=verbose)
           }
           )
 

@@ -2,7 +2,7 @@
 ## SAVE main Method
 ##
 ## This software is distributed under the terms of the GNU GENERAL
-## PUBLIC LICENSE Version 3, April 2013.
+## PUBLIC LICENSE Version 15, November 2013.
 ##
 ## Copyright (C) 2013-present Jesus Palomo, Gonzalo Garcia-Donato, 
 ##							  and Rui Paulo
@@ -13,12 +13,16 @@
 function (response.name=NULL, controllable.names=NULL,
 			calibration.names=NULL,field.data=NULL,
             model.data=NULL,mean.formula=~1,bestguess=NULL,
-            kriging.controls = SAVE.controls()){
+            kriging.controls = SAVE.controls(),verbose=FALSE){
 
 	model <- new ("SAVE")
 	dprct <-.deprecate.parameters(call=sys.call(sys.parent(1)))
   	model@call <- as.call(dprct)
-    #print (model@call)
+	
+	#establish the wd:
+	wd <- tempdir()
+	model@wd <- paste(wd,'/',sep='')	
+				
 
 	if (is.null(model.data) || length(model.data)==0)
 		stop ("Model data cannot be NULL\n")
@@ -31,28 +35,18 @@ function (response.name=NULL, controllable.names=NULL,
 
 	if (sum(response.name==controllable.names)>0 || sum(response.name==calibration.names)>0)
 		stop ("Response variable cannot be a calibration nor a controllable input\n")
+				
+	if ((length(unique(controllable.names)) != length(controllable.names)) || 
+		(length(unique(calibration.names)) != length(calibration.names)))
+		stop ("Calibration or Controllable parameters contain duplicated inputs\n")
 	
 	model@responsename <- as.character(response.name)
-	
-    ####
-    # Processing the parameters for the kriging:
-     #krigingCall<- match.call(expand.dots=F)
-    #print(a)
-     #dots<-as.list(krigingCall$...)
-    #print(dots)
-    #cat("kriging.controls is:\n")
-    #print(kriging.controls)
-    #
-    # Now kriging.controls contains only those arguments that are allowed
-    # to be passed to DiceKriging.km()
-    # lower, upper, optim.method and parinit
-     #print("1")
-     #kriging.controls <- do.call("SAVE.controls",c(kriging.controls,dots))
-     #print("2")
-    
-    #####
+	   
+	#####
 	#Field data:
   	if (is.null(field.data) || length(field.data)==0){
+		# By now we are not allowing the field.data to be null
+		# in the future we will remove this stop
 		stop("Field data cannot be NULL\n")
   	  	if (!is.null(bestguess) & length(bestguess)!=0)
   			cat("The parameter bestguess unused and set to NULL since field data is not provided\n")
@@ -62,23 +56,21 @@ function (response.name=NULL, controllable.names=NULL,
 		aux <- which(names(model@call)=="bestguess")
 		model@call <- model@call[-aux]
 	}else {
-		#Select those columns corresponding to the controllable inputs:
-        yf <- as.vector(t(field.data[,model@responsename]))
-        model@yf <- yf
+		#Select those columns corresponding to the response variable:
+        	yf <- as.vector(t(field.data[,model@responsename]))
+        	model@yf <- yf
 	}	
 
-	if (is.null(controllable.names) || length(controllable.names)==0)
-		stop ("Controllable names cannot be NULL\n")
-	else{
-#df <- data.frame(field.data[,controllable.names])
-		df <- as.matrix(field.data[,controllable.names])
-		
-    	colnames(df) <- controllable.names
-		model@df <- df
-	}
-	model@controllablenames <- as.character(controllable.names)
-	
+    if (!is.null(controllable.names) && 
+		(length(unique(field.data[,controllable.names]))==1)) 
+			stop("The current field data indicates that the controllable parameters are fixed at a single value in the field experiment.\n 
+					 In this case, controllable.names parameter should be set to NULL.\n")
+
 	if (is.null(calibration.names) || length(calibration.names)==0){
+		stop ("Calibration parameters cannot be NULL in the current implementation of the package.")
+		# We are currently working on allowing the package to work with no Calibration parameters
+		# the alternative using bestguess is not fully tested yet, so that is why we are are stopping here.
+		# April, 29th, 2014
 		if (!is.null(bestguess) & length(bestguess)!=0)
 			cat("The parameter bestguess unused and set to NULL since calibration parameters have not been provided\n")
 		bestguess <- as.numeric(NULL)
@@ -90,14 +82,50 @@ function (response.name=NULL, controllable.names=NULL,
 			stop("bestguess cannot be NULL when there are calibration parameters.")
 	}	
 	model@calibrationnames <- as.character(calibration.names)
-	
+
+    model@constant.controllables <- F # The Flag for constan controllable inputs is set to its default value
+                                      # i.e. the controllables are not constant by default.
+	if (is.null(controllable.names)){model@constant.controllables <- T}
     ####
-	#Model data:
-	dm <- as.matrix(model.data[,c(model@controllablenames,model@calibrationnames)])
-	colnames(dm) <- c(model@controllablenames,model@calibrationnames)
-	model@dm <- dm
+	if (!model@constant.controllables){
+		df <- as.matrix(field.data[,controllable.names])		
+		colnames(df) <- controllable.names
+		model@df <- df
+		model@controllablenames <- as.character(controllable.names)
+	}
+
+	model@meanformula <- mean.formula
+				
+	####
+    # Estimate stage I parameters using DiceKriging
+
+    #We differentiate between the two cases: varying controllable inputs and constant controllable inputs
+    #in the second case model.data to be given to the optimizer must only contain calibration inputs.
+    if (!model@constant.controllables){ #Case 1
+		#Model data:
+        dm <- as.matrix(model.data[,c(model@controllablenames,model@calibrationnames)])
+        colnames(dm) <- c(model@controllablenames,model@calibrationnames)
+	    x.unique <- as.data.frame(unique(model@df))
+	    names(x.unique) <- model@controllablenames
+	    model@xf <- model.matrix(model@meanformula,x.unique)
+    } else{ #Case 2: Constant controllable inputs
+		#Model data:
+		model@xf <- matrix(1, ncol=1, nrow=1)
+        dm <- as.matrix(model.data[,model@calibrationnames])
+        colnames(dm) <- model@calibrationnames
+    }
+
+    #####
+    #####
+    #Model data:
+    model@dm <- dm
+    #write.table(as.data.frame(model@dm), file=paste(model@wd,"/model_inputs.dat",sep=""),
+    #            col.names=F, row.names=F)
+
     ym <- as.vector(t(model.data[,model@responsename]))
     model@ym <- ym
+    #write.table(as.vector(model@ym), file=paste(model@wd,"/model_data.dat",sep=""),
+    #            col.names=F, row.names=F)
 
     #Detect if mean.formula contains terms that involve calibration inputs and remove them with a warning
 	#Also, keep the explicit expression for formula
@@ -114,7 +142,10 @@ function (response.name=NULL, controllable.names=NULL,
 		}
 	}
 
- 	model@meanformula <- mean.formula
+    #write.table(model@xm,file=paste(model@wd,"/mcmc.field.design.M.matrix.dat",sep=""),
+    #            col.names=F, row.names=F)
+    #write.table(model@xf,file=paste(model@wd,"/mcmc.field.design.F.matrix.dat",sep=""),
+    #            col.names=F, row.names=F)
 
     ####
     # Estimate stage I parameters using DiceKriging
@@ -126,7 +157,14 @@ function (response.name=NULL, controllable.names=NULL,
     betaM <- ((m@covariance)@range.val)^(-alphaM)
     lambdaM <- 1/((m@covariance)@sd2)
     thtaM <- c(lambdaM,betaM,alphaM)
-    names (thtaM) <- c("lambdaM",paste("betaM",c(model@controllablenames,model@calibrationnames),sep='.'),paste("alphaM",c(model@controllablenames,model@calibrationnames),sep='.'))
+    
+    #We distinguish between the cases: varying and constant controllable inputs:
+    if (!model@constant.controllables){ #Case 1
+        names (thtaM) <- c("lambdaM",paste("betaM",c(model@controllablenames,model@calibrationnames),sep='.'),paste("alphaM",c(model@controllablenames,model@calibrationnames),sep='.'))
+    }
+    else{ #Case 2: Constant controllable inputs
+        names (thtaM) <- c("lambdaM",paste("betaM",model@calibrationnames,sep='.'),paste("alphaM",model@calibrationnames,sep='.'))	
+	}
     thtaL <- m@trend.coef
 
     ####
@@ -148,8 +186,15 @@ function (response.name=NULL, controllable.names=NULL,
 		    aux <- matrix(rep(model@bestguess,length(model@yf)),ncol=length(model@bestguess),byrow=T)
  			aux <- as.data.frame(aux)
 			names(aux) <- model@calibrationnames
-			xnew <- data.frame(model@df,aux)
-			names(xnew) <- c(model@controllablenames,model@calibrationnames)
+                    #Here again we distinguish between varying or constant controllable inputs
+                    if (!model@constant.controllables){
+                        xnew <- data.frame(model@df,aux)
+                        names(xnew) <- c(model@controllablenames,model@calibrationnames)
+                    }
+                    else{ # Constant Controllable inputs
+                        xnew <- data.frame(aux)
+                        names(xnew) <- model@calibrationnames
+                    }
         }
     # predict code
     ymnew <- predict(m,newdata=xnew,type="UK",se.compute=FALSE,
@@ -158,7 +203,6 @@ function (response.name=NULL, controllable.names=NULL,
     # resulting bias
     biashat <- model@yf-ymnew$mean
     # print(df)
-
 
 	####################	
 	#load some auxiliary functions
@@ -178,36 +222,20 @@ function (response.name=NULL, controllable.names=NULL,
 	}
 	###############end of loading auxiliary funcs.	
 
-	#####
-	#Field data:
-	#Select those columns corresponding to the controllable inputs:
-	x<- field.data[,model@controllablenames]	
-	#Extract the unique part of the field design matrix as required by bayesfit:
-	x.unique<- as.data.frame(unique(x))
-	names(x.unique) <- model@controllablenames
-	my.original<- duplicates(x)
-	yf.ordered<- numeric(0)
-	nreps<- NULL
-	for (i in unique(my.original)){
-		yf.ordered<- c(yf.ordered,model@yf[my.original==i])
-		nreps<- c(nreps, sum(my.original==i))
-	}
-
-	if(length(nreps)==1){ # if we only have one distinct input value we use optimize.c
+	if(model@constant.controllables){ # if we only have one distinct input value we use optimize.c
 		#####
 		#Values of the parameters:
-		printOutput<- 0
 		sum2 <- sum(biashat^2) # sum of squares
 		tot2 <- sum(biashat)^2 # total square
 		n <- length(biashat) # sample size
-		write(c(n,sum2,tot2),file=".biasaux.tmp",ncolumns=3)
+		write(c(n,sum2,tot2),file=paste(model@wd,"biasaux.tmp",sep="/"),ncolumns=3)
 		maxiterations = 1000;
 		eps = 1.E-7;
 		err = 1.;
 		psi0 = 0.5;
 		
 		#call optimize.c
-		output <- .C('optimize',as.integer(printOutput),
+		output <- .C('optimize',as.integer(verbose),
 			as.integer(maxiterations),as.double(eps),
 			as.double(err),as.double(psi0),
 			as.character(model@wd))
@@ -217,6 +245,8 @@ function (response.name=NULL, controllable.names=NULL,
 		alphab <- maux[2]
 		betab <- maux[3]
 		lambdaF <- 1/(maux[4])
+		thtaF <- c(lambdab,lambdaF)
+		names (thtaF) <- c("lambdaB","lambdaF")		
 	} else { # we call again DiceKriging
 		# estimate parameters
     	# trend <- 0.0
@@ -227,84 +257,53 @@ function (response.name=NULL, controllable.names=NULL,
 		lambdab <- 1/((maux@covariance)@sd2)
 		lambdaF <- 1/((maux@covariance)@nugget)
 		alphab <- rep(2.0,length(betab))
+		thtaF <- c(lambdab,betab,alphab,lambdaF)
+		names (thtaF) <- c("lambdaB",paste("betaB",model@controllablenames,sep='.'),paste("alphab",model@controllablenames,sep='.'),"lambdaF")	    
+		
 	   }
-    
-    thtaF <- c(lambdab,betab,alphab,lambdaF)
-	names (thtaF) <- c("lambdaB",paste("betaB",model@controllablenames,sep='.'),paste("alphab",model@controllablenames,sep='.'),"lambdaF")
-	
+    	
 	model@mle <-list(thetaL=thtaL,thetaM=thtaM,thetaF=thtaF)
 				
 	
 	## End of gaspfit
-	## Beginning of bayesfit
-	
-	#establish the wd:
-	wd <- tempdir()
-	model@wd <- paste(wd,'/',sep='')	
-
-	#Write to the files
-	#file field_data.dat:
-	write.table(yf.ordered, file=paste(model@wd,"/field_data.dat", sep=""),
-                    col.names=F, row.names=F)
-        
-	#file field_nreps.dat:
-	write.table(nreps, file=paste(model@wd,"/field_nreps.dat", sep=""),
-                    col.names=F, row.names=F)
-        
-	#file field_unique.dat:
-	write.table(x.unique, file=paste(model@wd,"/field_unique.dat",sep=""),
-                    col.names=F, row.names=F)
-	#####
+    #####
 	#####
 	#Model data:
 	x.m<- as.data.frame(model.data[,c(model@controllablenames,model@calibrationnames)])
 	names(x.m) <- c(model@controllablenames,model@calibrationnames)
-	#write to the files:
-	write.table(x.m, file=paste(model@wd,"/model_inputs.dat",sep=""),
-                    col.names=F, row.names=F)
-	write.table(as.vector(t(model.data[,model@responsename])),
-                    file=paste(model@wd,"/model_data.dat",sep=""),
-                    col.names=F, row.names=F)
 	#####
 	#####
 	#Mean response:
     model@xm <- model.matrix(model@meanformula, x.m)
-				
-	write.table(model@xm,
-                    file=paste(model@wd,"/mcmc.field.design.M.matrix.dat",sep=""),
-                    col.names=F, row.names=F)
-	model@xf <- model.matrix(model@meanformula,x.unique)
-   	write.table(model@xf,
-                    file=paste(model@wd,"/mcmc.field.design.F.matrix.dat",sep=""),
-                    col.names=F, row.names=F)
-	#####
-	dthetaM <- length(model@calibrationnames) + length(model@controllablenames)
-	dthetaM <- dthetaM*2+1
-	dthetaL <- ncol(model@xm)
-	dthetaF <- 2*length(model@controllablenames)+2
-	
-	if(length(thtaM)!=dthetaM)
-				{model@mle<- NULL; stop("Dimension of MLE for the covariance of the computer model is incorrect\n")}
-	if(length(thtaL)!=dthetaL)
-				{model@mle<- NULL; stop("Dimension of MLE for the mean of the computer model is incorrect\n")}
-	if(length(thtaF)!=dthetaF)
-				{model@mle<- NULL; stop("Dimension of MLE for the second stage parameters is incorrect\n")}				
-				
 
-	#####
-	#Write the MLE to the appropriate files
-	write.table(model@mle$thetaM, file=paste(model@wd,"/thetaM_mle.dat", sep=""),
-                    col.names=F, row.names=F)
-	write.table(model@mle$thetaL, file=paste(model@wd,"/thetaL_mle.dat", sep=""),
-                    col.names=F, row.names=F)
-	write.table(model@mle$thetaF, file=paste(model@wd,"/thetaF_mle.dat", sep=""),
-                    col.names=F, row.names=F)
+    if (!model@constant.controllables){dthetaM <- length(model@calibrationnames) + length(model@controllablenames)}
+    else{dthetaM <- length(model@calibrationnames)}
+    
+    dthetaM <- dthetaM*2+1
+    dthetaL <- ncol(model@xm)
+    
+    if (!model@constant.controllables){dthetaF <- 2*length(model@controllablenames)+2}
+    else{dthetaF <- 2}
+    
+    if(length(model@mle$thetaM)!=dthetaM)
+    	{#model@mle<- NULL;
+        stop("Dimension of MLE for the covariance of the computer model is incorrect\n")}
+    if(length(model@mle$thetaL)!=dthetaL)
+    	{#model@mle<- NULL;
+        stop("Dimension of MLE for the mean of the computer model is incorrect\n")}
+    if(length(model@mle$thetaF)!=dthetaF)
+    	{#model@mle<- NULL;
+        stop("Dimension of MLE for the second stage parameters is incorrect\n")}
+
 
 #validObject(model, complete=TRUE)
+				
+	unlink(paste0(model@wd,'/*'))
+
 	return(model)	
 }
 
-####################	
+####################
 #load some auxiliary functions
 normal<- function(var.name, mean, sd, lower, upper){
 	if ((upper >= lower) && (mean >=lower) && (mean <= upper) && (sd >= 0))
@@ -338,9 +337,11 @@ uniform<- function(var.name, lower, upper){
 	#print(names(frmls))
         deprct <- which(!(names(aans) %in% names(frmls)))
         if (length(deprct) != 0) {
-                cat('Warning!: Deprecated parameters:\n')
-                print (as.character(names(aans)[deprct]))
-                ans <- ans[-(deprct+1)]
+            if (as.character(names(aans)[deprct])!=""){ 
+				cat('Warning!: Deprecated parameters:\n')
+				print(as.character(names(aans)[deprct]))
+			}
+	    ans <- ans[-(deprct+1)]
         }
         #return (deprct)
         #return(call)

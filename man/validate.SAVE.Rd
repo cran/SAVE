@@ -28,8 +28,14 @@
 \arguments{
   \item{object}{ An object of corresponding signature. }
   \item{x}{ An object of class \code{validate.SAVE}. }
-  \item{newdesign}{ A named matrix containing the points (controllable inputs) where predictions are to be performed. Column names should contain the \code{object@controllablenames}. }
-  \item{calibration.value}{ The summary of the posterior distribution of the calibration parameters which is taken as the true value for the computer model. Possible values are "mean" and "median". }
+  \item{newdesign}{ A named matrix containing the points (controllable
+inputs) where predictions are to be performed. Column names should contain
+the \code{object@controllablenames}. This parameter should be set to NULL
+in the situation with constant controllable inputs.}
+\item{calibration.value}{ Either the summary of the posterior distribution
+of the calibration parameters which is taken as the true value for the
+computer model (possible values are "mean" and "median") or a named data
+frame with numerical values to be used for the calibration parameters. }
   \item{prob}{ The probability used for the representation of the credible intervals. }
   \item{n.burnin}{ The burn-in to be applied (see details below).} 
   \item{n.thin}{ The thinning to be applied (see details below).}   
@@ -110,7 +116,7 @@ load <- c(4.0,5.3)
 curr <- seq(from=20,to=30,length=20)
 g <- c(1,2)
 
-xnew<- expand.grid(current = curr, load = load, thickness=g)
+xnew <- expand.grid(current = curr, load = load, thickness=g)
 
 valsw <- validate(object=gfsw,newdesign=xnew,n.burnin=100)
 

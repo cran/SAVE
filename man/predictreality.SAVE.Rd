@@ -17,7 +17,7 @@
 The emulator of the computer model and the Bayesian fit are used to produce samples from the posterior predictive distribution of the computer model and bias function evaluated at the new input points. Then, bias-corrected predictions of the response (reality) are produced by adding these two samples (model+bias).
 }
 \usage{
-\S4method{predictreality}{SAVE}(object, newdesign, n.burnin=0, n.thin=1, tol=1E-10, ...)
+\S4method{predictreality}{SAVE}(object, newdesign, n.burnin=0, n.thin=1, tol=1E-10, verbose=FALSE, ...)
 
 \S4method{summary}{predictreality.SAVE}(object)
 
@@ -27,10 +27,14 @@ The emulator of the computer model and the Bayesian fit are used to produce samp
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object}{ An object of the corresponding signature. }
-  \item{newdesign}{ A named matrix containing the points (controllable inputs) where predictions are to be performed. Column names should contain the \code{object@controllablenames}.}
+  \item{newdesign}{ A named matrix containing the points (controllable
+inputs) where predictions are to be performed. Column names should contain
+the \code{object@controllablenames}. This parameter should be set to NULL
+in the situation with constant controllable inputs.}
   \item{n.burnin}{ The burnin to be applied (see details below).} 
   \item{n.thin}{ The thinin to be applied (see details below).}   
   \item{tol}{ The tolerance in the Cholesky decomposition.}
+  \item{verbose}{A \code{logical} value indicating the level of output as the function runs.}
   \item{...}{ Extra arguments to be passed to the function (still not implemented).}
 }
 

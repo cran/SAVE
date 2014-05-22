@@ -17,16 +17,18 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %almost as usual
-\author{Jesus Palomo\\URJC\And Rui Paulo\\ISEG and CEMAPRE\And Gonzalo
-Garc\'\i a-Donato\\UCLM} 
-\title{\pkg{SAVE}: an \proglang{R} package for the Statistical Analysis of Computer Models} 
+\author{Jes\'us Palomo\\URJC \And 
+        Rui Paulo\\ISEG and CEMAPRE \And
+        Gonzalo Garc\'\i a-Donato\\UCLM}
+\title{\pkg{SAVE}: an \proglang{R} Package for the Statistical
+  Analysis of Computer Models} 
 %\VignetteIndexEntry{The SAVE package}
 
 
 %% for pretty printing and a nice hypersummary also set:
-\Plainauthor{Jes\'us Palomo, Rui Paulo, Gonzalo Garc\'\i a-Donato} %%
-% comma-separated
-\Plaintitle{SAVE: an R package for the Statistical Analysis of
+\Plainauthor{Jes\'us Palomo, Rui Paulo, Gonzalo Garc\'\i a-Donato} 
+%% comma-separated 
+\Plaintitle{\pkg{SAVE}: an R package for the Statistical Analysis of
   Computer Models} %% without formatting 
 \Shorttitle{\pkg{SAVE}: Analysis of Computer Models} %% a short
                                 %% title (if necessary) 
@@ -40,10 +42,9 @@ Garc\'\i a-Donato\\UCLM}
   validation of this type of models. The methodology is Bayesian and
   is essentially that of \citet{Baya:2007}. The package is available
   through the Comprehensive R Archive Network, CRAN. We illustrate its
-  use with a real data example.
-
- }
-
+  use with a real data example and in the context of a simulated
+  example.
+}
 \Keywords{\proglang{R} package, computer models, calibration, emulation,
   Bayesian analysis, Gaussian processes} 
 \Plainkeywords{R package, computer models, calibration, emulation,
@@ -62,7 +63,7 @@ Garc\'\i a-Donato\\UCLM}
 %% The address of (at least) one author should be given
 %% in the following format:
 \Address{
-Jesus Palomo\\
+Jes\'us Palomo\\
 Department of Business Administration (Finance)\\
 Rey Juan Carlos University\\
 28032 Madrid, Spain\\
@@ -79,7 +80,7 @@ Email: \email{rui@iseg.utl.pt}
 Gonzalo Garc\'\i a-Donato\\
 Department of Economics and Finance\\
 Universidad de Castilla-La Mancha\\
-02071, Albacete, Spain\\
+02071 Albacete, Spain\\
 Email: \email{gonzalo.garciadonato@uclm.es}}
 
 %  Achim Zeileis\\
@@ -141,22 +142,22 @@ are addressed in \ourpack:
 \end{itemize}
 
 Related \proglang{R} packages include \pkg{BACCO}, \citet{bacco}, and
-the suite of \pkg{Dice} packages: \pkg{DiceKrigging} and 
+the suite of \pkg{Dice} packages: \pkg{DiceKriging} and 
 \pkg{DiceOptim} \citep{dice12}, \pkg{DiceEval} \citep{DE} and
-\pkg{DiceDesign} \citep{DD}. \pkg{DiceKrigging}
+\pkg{Dice\-De\-sign} \citep{DD}. \pkg{DiceKriging}
 computes estimates of Gaussian process parameters, and our package
 takes advantage of its functionalities, while \pkg{DiceOptim} is
-dedicated to optimimization of complex computer models based on
-krigging models. 
+dedicated to optimization of complex computer models based on
+kriging models. 
 \pkg{DiceDesign} 
-facilitates the construction of space-filling designs
+facilitates the construction of various space-filling designs
 for computer experiments. \pkg{DiceEval} tackles the problem of 
 validation but follows an approach that is quite different from ours;
 in particular, it is not Bayesian. 
 
 \pkg{BACCO} is a package that is similar to ours in its
 goals. However, it
-implements the methodology in \citet{Kenn:OHag:2001} 
+implements the metho\-do\-lo\-gy in \citet{Kenn:OHag:2001} 
 which, although Bayesian, is distinct from that of \citet{Baya:2007},
 the one we implement [\pkg{BACCO} also implements the methods in
 \citet{Kenn:O'Ha:2000}, which is a topic we do not cover]. The most
@@ -165,8 +166,8 @@ we explore the posterior distribution of the parameters of the
 statistical model
 using simulation-based techniques, namely Markov chain Monte Carlo,
 whereas \pkg{BACCO} relies either 
-on analytical or on numerical integration. In that
-sense, with \pkg{SAVE} one can for instance explore the posterior
+on analytical or on numerical integration. As a consequence, with
+\pkg{SAVE} one can for instance explore the posterior 
 distribution of calibration parameters, which often have a physical
 meaning, and take advantage of all the benefits that come with
 simulation-based inference. This will be illustrated in 
@@ -183,44 +184,47 @@ routines written in \proglang{Fortran}, notably those available from
 % The package \ourpack\ is available from the Comprehensive R Archive
 % Network at {\tt http://CRAN.R-project.org/package=SAVE} and can be
 % installed using  
-% \begin{CodeInput}
-% R> install.packages(SAVE)
-% \end{CodeInput}
+% \begin{Code}
+% R> install.packages("SAVE")
+% \end{Code}
 % Once it is installed, the user can have access to the functionalities
 % in \ourpack\ through the command: 
-% \begin{CodeInput}
-% R> library(SAVE)
-% \end{CodeInput}
+% \begin{Code}
+% R> library("SAVE")
+% \end{Code}
 
-The rest of this paper is organized as follows. In the next section we
-describe the statistical methodology establishing
-links with the package. In Section~\ref{overview} we describe the
+The rest of this paper is organized as follows. In the next section, we
+describe the statistical methodology. In Section~\ref{overview}, we
+describe the 
 structure of the package, and in
 Section~\ref{spotweld} we illustrate its use in the context of a real
-example. Technical details are, whenever possible, relegated to the
+example. In Section~\ref{synth}, we use it in a situation where the
+truth is known. Technical details are, whenever possible, relegated to the
 appendices. 
 
 \section{Introducing the statistical framework}\label{frame}
-Denote the output of the computer model by $y^M (\n x, \n u)$, where
+Denote the output of the computer model by $y^M (\n x, \n v)$, where
 $\n x$ is a 
 vector of controllable inputs and  
-$\n u$ is a vector of unknown calibration and/or tuning parameters in
+$\n v$ is a vector of unknown calibration and/or tuning parameters in
 the model. We have
 access to the data obtained by evaluating the computer model at a
 design set 
-consisting of $N$ points $D^M=\{(\n x_1,\n u_1),\ldots,(\n x_{N},\n
-u_{N})\}$. % Model output and associated design are stored in a {\tt
+consisting of $N$ points $D^M=\{(\n x_1,\n v_1),\ldots,(\n x_{N},\n
+v_{N})\}$. % Model output and associated design are stored in a {\tt
 %   data.frame} which is called {\tt model.data} in this paper. This
 % object has $N$ rows;
 % the columns contain the response output and the input
 % variables. This is illustrated in Table~\ref{inv.dataframe} where, for
 % pedagogical reasons, a simple synthetic example is used. 
 We denote by
-$\n y^M$ the vector of model evaluations.
+$\n y^M=(y^M(\n x_1,\n v_1),\ldots,y^M(\n x_{N},\n
+v_{N}))$ the vector of model evaluations, and we refer to these data
+as computer model data, or simply as model data.
 
 A preliminary but central question in the analysis is the construction
 of an emulator of the computer model, that is, a method to produce
-estimates of the output at untested configurations along with an
+estimates of the output at untested configu\-rations along with an
 associated measure of uncertainty. This is stage I of the analysis of
 a computer model. For this task, we follow the
 popular strategy (cf. \citet{Sack:1989}, \citet{Kenn:O'Ha:2000} and
@@ -230,10 +234,12 @@ model output. This approach results in that, conditional on $\n y^M$
 and on a set of parameters specifying the Gaussian process, $y^M (\cdot)$ 
 follows a Gaussian process with mean and covariance functions which
 are available in closed form. The approach that \ourpack\ currently
-implements for emulating $y^M(\cdot)$ estimates the unknown parameters,
-denoted by $\n \theta^M$ and $\n \theta^L$, by maximum likelihood,
-using the \proglang{R} package \pkg{DiceKrigging}
-\citep{dice12}.
+implements for emulating $y^M(\cdot)$ estimates the unknown parameters
+%,
+%denoted by $\n \theta^M$ and $\n \theta^L$, 
+by maximum likelihood
+using the \proglang{R} package \pkg{DiceKriging}
+\citep{dice12}. 
 % , so that
 % $$
 % y^M (\n x, \n u)\mid \n y^M, \hat{\n \theta}^M, \hat{\n \theta}^L \sim
@@ -248,15 +254,18 @@ using the \proglang{R} package \pkg{DiceKrigging}
 Analytic expressions for the mean and covariance functions can be
 found in
 Appendix~\ref{app.emu}, along with a description of the parameters
-${\n\theta}^M$ and ${\n\theta}^L$. In practical terms, the output of
+${\n\theta}^L$ and ${\n\theta}^M$ which specify, respectively, the
+linear trend and the covariance kernel of the Gaussian process prior. In practical
+terms, the output of 
 the computer model 
 at a set of untested configurations (given $\n y^M$ and the parameter
 estimates) follows a multivariate normal
-distribution with known mean vector and covariance matrix. The
-function \code{predictcode} returns iid draws from this multivariate
-distribution, along with its mean vector and 
+distribution with known mean vector and covariance matrix. 
+%The
+%function \code{predictcode} returns iid draws from this multivariate
+%distribution, along with its mean vector and 
 %the Cholesky decomposition of the
-covariance matrix. 
+%covariance matrix. 
 
 % The estimation $\hat{\n\theta}^M$ is typically tackled
 % by maximizing the likelihood function associated with the {\tt
@@ -272,10 +281,11 @@ covariance matrix.
 Field data consists of noisy observations of the real process,
 possibly with replicates. To be more precise, we have a design set
 $D^F=\{ {\n x}_{1}^{\star},\ldots,{\n x}_{n}^{\star}\}$ and we observe
-$$
-y^F(\n x_j^*) = y^R(\n x_j^*)+\varepsilon_{j},\quad j=1,\ldots,n
-$$
-where $y^R(\cdot)$ represents the real process and $\varepsilon_{j}$
+\begin{equation}
+y_k^F(\n x_j^{\star}) = y^R(\n x_j^{\star})+\varepsilon_{kj},\quad j=1,\ldots,n;\
+k=1,\ldots, n_j 
+\end{equation}
+where $y^R(\cdot)$ represents the real process and $\varepsilon_{kj}$
 are independent and identically distributed $N(0,1/\lambda^F)$ random
 variables. % Both the field observations and the associated design are
 % stored in a {\tt data.frame} that we refer to as {\tt field.data}. See
@@ -283,8 +293,8 @@ variables. % Both the field observations and the associated design are
 % the data is organized. 
 Notice that the field data may contain
 replicates, that is, independent  measurements of the experiment using
-the same configuration of the controllable inputs. We denote the set of
-field observations by $\n y^F$.
+the same configuration of the controllable inputs. We denote the
+complete set of field observations by $\n y^F$.
 
 Calibrating a model stands for finding estimates of 
 the vector of
@@ -294,12 +304,22 @@ the output of the model and the real phenomenon which introduces the
 notion of model discrepancy (cf. \citet{Crai:1997},
 \citet{Kenn:OHag:2001} and \citet{Gold:2010}), namely,
 \begin{equation}\label{eqreal}
-y^R(\n x)=y^M(\n x,\n u^\star)+b(\n x)\ ,
+y^R(\n x)=y^M(\n x,\n u)+b(\n x)\ ,
 \end{equation}
 where $b(\n x)$ stands for the bias or discrepancy function, and $\n
-u^\star$ is the unknown value of the calibration vector which we are
-ultimately interested in estimating. For ease of notation we refer to
-$\n u^{\star}$ simply as $\n u$.
+u$ is the unknown value of the calibration vector $\n v$ which we are
+ultimately interested in estimating. In Figure~\ref{diag1} we have
+included a diagram which schematically characterizes the framework we
+have just described. 
+% For ease of notation we refer to
+% $\n u^{\star}$ simply as $\n u$.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[scale=0.1]{FunctionalDiagram2_letters}
+  \caption{Schematic representation of the framework.}\label{diag1}
+\end{figure}
+
 
 The approach that this package implements is (partially) Bayesian and
 therefore 
@@ -318,39 +338,59 @@ stage II. (The bias function $b(\cdot)$ gets a Gaussian process prior;
 $\lambda^b$ denotes the precision and the vector $\n \beta^b$ controls
 the correlation structure of this process.)
 
-The posterior distribution is obtained using
+The posterior distribution $\pi(\n u,\n \theta^F\mid \n y^M, \n y^F)$ is
+obtained using 
 Markov chain Monte Carlo (MCMC) methods and is ultimately represented by a 
-sample of correlated draws, which we denote by $\{ \n u_i, \n \theta^F_i,\
+sample of correlated draws, which we denote by 
+$\{(\n u_i, \n \theta^F_i),\
 i=1,\ldots,M\}$. Details on the sampling method used are described in
-Appendix~\ref{app.mcmc}. The \ourpack\ function that implements this
-task is called \code{bayesfit}.
+Appendix~\ref{app.mcmc}. 
+% The \ourpack\ function that implements this
+% task is called \code{bayesfit}.
 
-Once the posterior distribution of all the unknowns in the model is
-obtained, we can proceed to validate the computer model at $D^V$, a
-set of configurations for the controllable inputs. To
-do so, we must obtain draws from the distribution
-\begin{equation}\label{real}
+Once the posterior distribution of all the unknowns in the statistical
+model is
+obtained, we can proceed to the validation step. For that, we need to
+select a set of configurations for the controllable inputs, $D^V$ ---
+e.g., $D^V=\{\n x_{1}^{\dagger},\ldots,\n x_r^{\dagger}\}$ --- at which
+we are interested in assessing the accuracy of the computer
+model. For a particular value $\n u$ for the calibration parameter, let 
+$D_{\scriptsize \n u}^V=\{(\n x_{1}^{\dagger},\n u),\ldots,(\n
+x_r^{\dagger},\n u)\}$, i.e., the design that results from augmenting
+each of the configurations in $D^V$ with the vector $\n u$ for the
+calibration parameters. In general, we denote by $h(D)$ the
+vector that results from evaluating the function $h$ at the elements
+of $D$.
+% To 
+% address the validation step, w
+We must obtain draws from the distribution
+\begin{align}\label{real}
+% f(y^M(D_{\n {\scriptsize u}^\star}^V), b(D^V)&\mid \n y^M, \n y^F)=\\
+% =&
 \int 
-f(y^M(D_{\scriptsize \n u}^V),b(D^V)\mid \n y^M, \n y^F, \n u,\n \theta^F)\ \pi( \n
+f(y^M(D_{\scriptsize \n u}^V),b(D^V)\mid \n y^M, \n y^F, \n u,\n
+\theta^F)\ \pi( \n 
 u,\n \theta^F\mid \n y^M, \n y^F)\ d\n
 u\ d \n \theta^F
-\end{equation}
-which are obtained by drawing the vectors $\n y^M_i, \n b_i$ from
-$f(y^M(D_{\scriptsize \n u_i}^V),b(D^V)\mid \n y^M, \n y^F, \n u_i,\n
+\end{align}
+which are obtained by drawing the vectors $(\n y^M_i, \n b_i)$ from
+$f(y^M(D_{\scriptsize \n u_i}^V), b(D^V)\mid \n y^M, \n y^F, \n u_i,\n
 \theta^F_i)$ 
 for every $(\n u_i,\n \theta^F_i)$ in the previously constructed MCMC
-sample drawn from the posterior distribution. The \ourpack\ function
-that performs this task is called \code{predictreality}. Above, the set
-$D^V_{{\scriptsize \n u}}$ corresponds to the design that results from
-augmenting each of the configurations in $D^V$ 
-with the vector $\n u$ 
-for the calibration parameter. In general, we denote by $h(D)$ the
-vector that results from evaluating the function $h$ at the elements
-of $D$. 
+sample drawn from the posterior distribution. [The distribution of 
+$y^M(D_{\scriptsize \n u}^V),b(D^V)\mid \n y^M, \n y^F, \n u,\n
+\theta^F$ is
+multivariate normal, cf. \citet{Baya:2007} for further details.] 
+% The
+% \ourpack\ function 
+% that performs this task is called \code{predictreality}. Above, the set
+% $D^V_{{\scriptsize \n u}}$ corresponds to the design that results from
+% augmenting each of the configurations in $D^V$ 
+% with the vector $\n u$ 
+% for the calibration parameter. 
 
-Having obtained the sample $\{\n y^M_i, \n b_i,\ i=1,\ldots,M\}$, we can
-compute several quantities which will aid us in the validation task 
-\citep{Baya:2007}:
+Having obtained the samples $\{(\n y^M_i, \n b_i),\ i=1,\ldots,M\}$, we can
+compute several quantities which will aid us in the validation task:
 \begin{itemize}
 \item The bias-corrected prediction of the real process (i.e., reality
  ) at $D^V$
@@ -366,16 +406,20 @@ $$
 $$
 with the inequality interpreted in a component-wise fashion.
 We can then state that, for each $\n x \in D_V$, $\Pr(|y^R(\n
-x)-\hat{y}^R(\n x)|<\tau(\n x)\mid \n y^F, \n y^M)=\gamma$.
+x)-\hat{y}^R(\n x)|<\tau(\n x)\mid \n y^F, \n y^M)=1-\gamma$.
 \item The pure-model prediction of reality at $D^V$ is obtained by
   selecting an estimate of $\n u$, $\hat{\n u}$, say, which can be,
   for instance,
   its posterior mean or median. Then, output of the model at
   $D^V_{\hat{\n u}}$ is computed by either actually running the model
-  or by exercising the emulator. Function \code{predictcode} obtains
-  draws from the emulator, but also returns the mean vector of the
-  emulator, which can be used as an estimate of the output of the
-  model. Denote this estimate by $\hat{\n y}^M$.  
+  or by exercising the emulator. 
+% Function \code{predictcode} obtains
+%   draws from the emulator, but also returns
+  The mean vector of the
+  emulator (formula \eqref{meanapp}, in Appendix~\ref{app.emu}, with
+  unknown parameters replaced  
+  by estimates), can then be used as an estimate of the output of the
+  model. Denote the pure-model prediction of reality by $\hat{\n y}^M$.
 \item The tolerance bars measuring  the accuracy of $\hat{\n y}^M$ as a
   predictor of $y^R(D^V)$ are computed in a similar fashion: pick $\gamma\in
   (0,1)$; then, compute $\n \tau = (\tau(\n x): \n x\in D^V)$ such that
@@ -385,22 +429,22 @@ $$
 $$
 with the inequality interpreted in a component-wise fashion. We can
 then state that, for each $\n x \in D_V$, $\Pr(|y^R(\n 
-x)-\hat{y}^M(\n x)|<\tau(\n x)\mid \n y^F, \n y^M)=\gamma$.
+x)-\hat{y}^M(\n x)|<\tau(\n x)\mid \n y^F, \n y^M)=1-\gamma$.
  
 \item It is also possible to estimate the bias associated with the
   pure-model prediction, $\n b_{\hat{\n u}}=y^R(D^V)-\hat{\n y}^M$:
     samples from its posterior predictive distribution can be obtained
     by computing $\{ \n y^M_i + \n b_i - \hat{\n y}^M\}$ so that a
     point estimate is $\hat{\n b}_{\hat{\n u}}=\hat{\n y}^R-\hat{\n y}^M$
-      and $\gamma$ pointwise credible intervals can be determined by
+      and $1-\gamma$ pointwise credible intervals can be determined by
       computing the associated 
       $\gamma/2\times 100\%$ and $(1-\gamma/2)\times 100\%$ sample
       quantiles.
 \end{itemize}
-The \ourpack\ function that, given $D^V$ and a posterior estimate of
-${\n u}$, computes the 
-bias-corrected prediction, the pure-model prediction, associated
-tolerance bounds and estimated bias function is called \code{validate}.
+% The \ourpack\ function that, given $D^V$ and a posterior estimate of
+% ${\n u}$, computes the 
+% bias-corrected prediction, the pure-model prediction, associated
+% tolerance bounds and estimated bias func\-tion is called \code{validate}.
 
 \section{An overview of SAVE}\label{overview}
 
@@ -465,7 +509,7 @@ illustrative purposes, consider
 the synthetic example in Figure~\ref{inv.dataframe}. The
 data frame at the top of the figure contains the field data and
 the one at the bottom contains the model data. If we decide to analyze
-the problem where the response is the variable is \code{expand};
+the problem where the response is the variable \code{expand};
 controllable inputs are \code{temp}, \code{press} and \code{weight};
 and calibration inputs are \code{delta1} and \code{shift}, then we
 must call the function \code{SAVE} with arguments, \code{field.data =
@@ -473,7 +517,22 @@ must call the function \code{SAVE} with arguments, \code{field.data =
 \code{controllable.names = c("temp", "press", "weight")}, 
 \code{calibration.names = c("delta1", "shift")}.
 Notice that not all the columns present in the data frames are
-incorporated in this analysis.
+incorporated in this analysis. 
+
+If in order to obtain the field data
+the controllable inputs (if any are present) have not been varied but have instead been fixed at a single 
+value, you have to specify \code{controllable.names = NULL}.
+
+We have included in Figure~\ref{diag2} a diagram which schematically
+describes the structure of the package, its different parts and
+interconnections. 
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=14cm]{FunctionalDiagram1_1_letters}
+  \caption{Schematic representation of the structure of the
+    package.}\label{diag2} 
+\end{figure}
 
 \begin{figure}[t!]
 \begin{center}
@@ -507,7 +566,7 @@ $N$ & 34.4 & 2.12 & 700.1 & 0.49 & -0.8 & 67.6 & 0.33\\
 \caption{{\small Synthetic example: the data frame at the top of the
     figure is called \code{field} and contains the field data; the data
     frame at the bottom of the 
-    figure is called \code{model} and contains the model data}}  
+    figure is called \code{model} and contains the model data.}}  
 \label{inv.dataframe}
 \end{figure}
 
@@ -524,9 +583,37 @@ $N$ & 34.4 & 2.12 & 700.1 & 0.49 & -0.8 & 67.6 & 0.33\\
 % the calibration inputs, a formula for the 
 % mean function of the emulator, and a best guess for $\n u$ (cf.
 % Appendix~\ref{app.prior} for details on this argument). The
-% function 
+% function
 
-\section{An example} \label{spotweld}
+
+When putting together the package, we have taken into account the fact
+that 
+many of the calculations implemented by the functions described above
+can be computationally 
+demanding and numerically unstable. For example, it's a well-known fact that
+covariance 
+matrices arising in Gaussian process likelihoods can be close
+to singular even for relatively small sample sizes. As such, when
+evaluating the likelihood we never invert matrices and instead perform 
+the Cholesky decomposition (which is also useful to compute the
+determinant) and solve triangular systems. In some situations, like
+when performing predictions, we resort to the pivotal Cholesky
+decomposition because the regular Cholesky decomposition tends to
+break down. All the linear algebra calculations are
+performed with the help of the the \proglang{BLAS} and
+\proglang{LAPACK} numerical libraries, which
+are known 
+to be quite stable and accurate. The size of the field and model
+datasets determines the size of the matrices that need to be
+manipulated, and hence represent the biggest bottleneck when it comes
+to the speed of the calculations. As we have already stressed, in order to
+make the package as fast as possible we have implemented all the
+computationally intensive computations in \proglang{C}. Nevertheless,
+large sample sizes could certainly be an issue. So far, the package
+has only been tested in problems where the sample sizes can be
+considered small, say below 50.
+
+\section{A real data example} \label{spotweld}
 In this section we illustrate the use of the package with an analysis
 of a real example. It is the so-called spotweld example 
 originally analyzed in \citet{Baya:2007}. We refer the interested
@@ -534,35 +621,66 @@ reader to that paper for complete details on the application.
 
 In Figure~\ref{spot} you 
 can find a schematic representation of the spot welding process. Two
-sheets of metal of a particular thickness (\code{G}) are compressed by
+sheets of metal of a particular thickness (\code{thickness}) are compressed by
 two 
 electrodes under a certain 
-applied load (\code{L}). Electric current of magnitude \code{C} is
+applied load (\code{load}). Electric current of certain magnitude
+(\code{current}) is 
 passed through 
 said electrodes and the heat produced by the current flow causes the
 surfaces under pressure to melt. After cooling, a weld nugget is
 formed and as a result the two metal sheets are welded together. The
-scientists are interested in the diameter of this nugget (\code{N}). 
+scientists are interested in the diameter of this nugget (\code{diameter}). 
 
-Included in the package are two datasets, \code{spotweldfield} and
+Included in the package are two data sets, \code{spotweldfield} and
 \code{spotweldmodel} that pertain, respectively, to field experiments
 and computer model experiments associated with this problem. After
-loading the package (\code{library(SAVE)}), the dataframes can be
-loaded using the commands \code{data(spotweldfield,package="SAVE")}
-and \code{data(spotweldmodel,package="SAVE")}.
+loading the package (\code{library("SAVE")}), the data frames can be
+loaded using the commands 
+\begin{Code}
+R> data(spotweldfield, package = "SAVE")
+\end{Code}
+and 
+\begin{Code}
+R> data(spotweldmodel, package = "SAVE")
+\end{Code}
 Notice that the columns of the data frames are appropriately named,
 and that the computer model features an additional input, named
-\code{t}, which is a calibration input related to contact resistance. 
+\code{tuning}, which is a calibration input related to contact resistance. 
 
-We start this analysis with setting up the problem by creating
+We start this analysis by setting up the problem. This is accomplished
+by creating
 \code{sw}--- an object of the class 
 \code{SAVE-class}--- using the function \code{SAVE}:
-\begin{CodeInput}
-R> sw <- SAVE(response.name="diameter", controllable.names=c("current", "load", "thickness"),
-+             calibration.names=c("tuning"), field.data=spotweldfield,
-+             model.data=spotweldmodel, mean.formula=~1,
-+             bestguess=list(t=4.0))
-\end{CodeInput}
+\begin{Code}
+R> sw <- SAVE(response.name = "diameter", 
++             controllable.names = c("current", "load", "thickness"),
++             calibration.names = "tuning", field.data = spotweldfield,
++             model.data = spotweldmodel, mean.formula = ~1),
++             bestguess = list(tuning = 4.0))
+\end{Code}
+
+\begin{figure}[t!]
+\begin{center}
+{\small\scalebox{0.75}{
+\begin{tabular}{rcccc}
+& {\tt data.frame} & Response ($y$) & Controllable ($\n x$) &
+Calibration ($\n v$)\\ 
+\hline
+%& \multicolumn{3}{c}{Computer model names: {\tt spotweldmodel\$}}\\
+Computer model names & {\tt spotweldmodel} & {\tt \$diameter} & {\tt \$current}, {\tt \$load}, {\tt \$thickness} & {\tt \$tuning}\\
+%\hline
+%& \multicolumn{3}{c}{Field names: {\tt spotweldfield\$}}\\
+Field names & {\tt spotweldfield} & {\tt \$diameter} & {\tt \$current}, {\tt \$load}, {\tt \$thickness} & -\\
+\end{tabular}
+}
+}
+\end{center}
+\caption{{\small Correspondence between the notation in Section 2 and
+    the variable names in the 
+spotweld example.}}  
+\label{corr.names}
+\end{figure}
 
 Here we are specifying which columns correspond to the response and
 which correspond to the controllable and the calibration
@@ -571,7 +689,7 @@ we are also
 \begin{itemize}
 \item setting the mean function of the Gaussian process approximation to the
 output of the computer model as a constant (with the option
-\code{mean.formula=~1}) and
+\code{mean.formula = ~1}) and
 \item providing an estimate of the vector of calibration inputs as a
   list (\code{bestguess}), which will be used in specifying the prior
   for $\n \theta^F$ 
@@ -580,8 +698,8 @@ output of the computer model as a constant (with the option
 
 \begin{figure}[t]
   \centering
-  \includegraphics[scale=0.2]{SW}
-  \caption{Schematic representation of the spotwelding process\label{spot}}
+  \includegraphics[scale=0.2]{SW.pdf}
+  \caption{Schematic representation of the spotwelding process.}\label{spot}
 \end{figure}
 
 The object \code{sw} has now been created and several of its slots
@@ -595,13 +713,14 @@ more on this later.
 Instead, we will proceed to fit the Bayesian model \eqref{eqreal}
 relating reality 
 to computer model. To do so, we use the function \code{bayesfit}:
-\begin{CodeInput}
-R> swbayes <- bayesfit(object=sw, prior=c(uniform("t", upper=8,
-+                      lower=0.8)), n.iter=20000, n.burnin=100, 
-+                      n.thin=2)
-\end{CodeInput}
-We have created a new object --- \code{swbayes} --- but 
-instead we could have updated the object we have just created,
+\begin{Code}
+R> set.seed(0)	
+R> swbayes <- bayesfit(object = sw, prior = c(uniform("tuning", upper = 8,
++                      lower = 0.8)), n.iter = 20000, n.burnin = 100, 
++                      n.thin = 2)
+\end{Code}
+We have now created a new object --- \code{swbayes} --- but 
+instead we could have updated the object we had already created,
 \code{sw}. Notice that we need to specify a prior for the calibration
 parameter \code{tuning}, and also options pertaining to the MCMC
 algorithm. We have set a uniform prior for the calibration parameter,
@@ -617,12 +736,12 @@ respectively. To display this information we can again
 resort to the command \code{summary(swbayes)}. We can however also
 plot the samples obtained: 
 \begin{itemize}
-\item \code{plot(swbayes, option="trace")} will
+\item \code{plot(swbayes, option = "trace")} will
 give us the traceplots;
-\item \code{plot(swbayes, option="calibration")}
+\item \code{plot(swbayes, option = "calibration")}
 will produce an histogram of the posterior samples of the calibration
 parameters and corresponding priors: see Figure~\ref{cal}; and,
-\item  \code{plot(swbayes, option="precision")} will plot
+\item  \code{plot(swbayes, option = "precision")} will plot
 histograms of the posterior samples of the field and bias
 precisions. These histograms also include a plot of the prior and of
 the estimates that are used in constructing the prior, see
@@ -633,45 +752,54 @@ Figure~\ref{prec}.
   \centering
   \includegraphics[scale=0.3]{postcal.pdf}
   \caption{Posterior distribution of the calibration parameter
-    \code{tuning}. The dotted line corresponds to the prior used.}
+    \code{tuning} (spotweld example). The dotted line corresponds to the
+    prior used.} 
   \label{cal}
 \end{figure}
 
 \begin{figure}[h]
   \centering
   \includegraphics[scale=0.3]{postprec.pdf}
-  \caption{Posterior distribution of the precisions. The dashed
+  \caption{Posterior distribution of the precisions (spotweld example). The dashed 
     vertical lines indicate the estimates of the parameters; the
     dash-dot lines indicate the priors used.}
   \label{prec}
 \end{figure}
 
-
-Additionally, we can of course access the raw data. By running the
+We can of course access the raw data. By running the
 command \code{slotNames(swbayes)} we get a description of the
 names of all the
-slots of the object \code{swbayes}, and it's then clear how to obtain the
+slots of the object \code{swbayes}, and it is then clear how to obtain the
 MCMC samples: \code{swbayes@mcmcsamples}.
 
 After fitting the Bayesian model, we can finally produce predictions
-of reality and also assess the quality of pure-model predictions of
+of reality and also assess the quality of pure-model and
+bias-corrected predictions of
 reality. The package \pkg{SAVE} provides a very convenient function
 that performs all these calculations. To illustrate its use in the
 present 
 example, please consider the following \proglang{R} code:
-\begin{CodeInput}
-R> load <- c(4.0,5.3); curr <- seq(from=20,to=30,length=20); g <- c(1,2)
-R> xnew <- as.data.frame(expand.grid(curr,load,g))
-R> names(xnew)<-c("current","load","thickness")
-R> 
-R> valsw <- validate(object=swbayes,newdesign=xnew,
-+                    calibration.value="mean",n.burnin=100)
-\end{CodeInput}
-We first construct the design of controllable inputs at which we want
+\begin{Code}
+R> load <- c(4.0,5.3); curr <- seq(from = 20,to = 30,length = 20); g <- c(1,2)
+R> xnew <- expand.grid(current = curr, load = load, thickness=g)
+R>
+R> set.seed(0)
+R> valsw <- validate(object = swbayes, newdesign = xnew,
++                    calibration.value = "mean", n.burnin = 100)
+\end{Code}
+Above, we first construct the design of controllable inputs at which we want
 to predict reality. For four combinations of load and thickness of the
 metal plates, we want to predict the weld diameter as a function of
-current. Regarding the pure-model prediction, we are setting the
-calibration parameters at the corresponding posterior mean. The
+current. As a remark, note that in the situation where \code{controllable.names = NULL}, 
+the input \code{newdesign} must be left unspecified. 
+This comment also applies when using the function \code{predictreality} in the same context.
+
+Regarding the pure-model prediction, we are setting the
+calibration parameters at the corresponding posterior mean. Note that we could set 
+the calibration parameters at a particular value if we chose to. We would do it by 
+specifying the input \code{calibration.value} to be a named \code{data.frame} containing those values. 
+
+The
 resulting object \code{valsw} contains a slot named \code{validate}
 where a matrix is stored. This matrix contains as columns the
 pure-model prediction of reality (\code{pure.model}) and associated
@@ -697,19 +825,22 @@ observations.
 \begin{figure}[h]
   \centering
   \includegraphics[scale=0.3]{plotval.pdf}
-  \caption{Default validation plot. The plot at the top contains the
+  \caption{Default validation plot for the spotweld example. The plot
+    at the top contains the 
     pure-model predictions (circles) at each of the input
     configurations in \code{xnew} and associated 90\% tolerance
     bounds. The middle plot depicts an estimate of the bias of these
     pure-model estimates. The bottom plot contains the bias-corrected
-    prediction (circles) and associated 90\% tolerance bounds. }
+    prediction (circles) and associated 90\% tolerance bounds.}
   \label{valplot}
 \end{figure}
 
 \begin{figure}[h]
   \centering
   \includegraphics[scale=0.3]{valswcustom.pdf}
-  \caption{Customized validation plot. Here we can see the pure-model
+  \caption{Customized validation plot for the spotweld example. Here
+    we can see the pure-model 
+    prediction 
     for 4 different combinations of load and thickness as a function
     of current. The dotted lines indicate the 90\% tolerance bounds
     and the circles represent the observed field data corresponding to
@@ -717,6 +848,22 @@ observations.
   \label{valplotcustom}
 \end{figure}
 
+A referee has pointed out how easy it is to incorporate
+further insight into the statistical analysis of a particular
+problem using the package. As an example, we can easily incorporate  a
+linear trend in 
+the mean function for the emulator. This would be accomplished simply
+by starting the analysis with the command
+\begin{Code}
+R> sw2 <- SAVE(response.name = "diameter", 
++              controllable.names = c("current", "load", "thickness"),
++              calibration.names = "tuning", field.data = spotweldfield,
++              model.data = spotweldmodel, 
++              mean.formula = ~ current + load + thickness),
++              bestguess = list(tuning = 4.0))
+\end{Code}
+which produces an new \code{SAVE-class} object, \code{sw2}, and then we can
+proceed as before.
 
 As stated above, \code{validate} is a function which calls two
 low-level functions, \code{predictcode} and
@@ -724,28 +871,30 @@ low-level functions, \code{predictcode} and
 call these functions. We illustrate this in what follows.
 
 Imagine that one is interested in understanding how the nugget
-diameter \code{diameter} 
-varies with the current \code{current}. One might assess this variation by
-looking at the derivative of \code{diameter} with respect to \code{current}. Let's
-do that for \code{thickness}=1 and \code{load}=4. We start by predicting reality
+\code{diameter} 
+varies with \code{current}. One might assess this variation by
+looking at the derivative of \code{diameter} with respect to
+\code{current}. Let's 
+do that for \code{thickness = 1} and \code{load = 4}. We start by
+predicting reality 
 at an equally-spaced grid of \code{current} values between 20 and 30:
-\begin{CodeInput}
-R> load <- 4; g <- 1; curr <- seq(from=20, to=30, length=80)
-R> xnew <- expand.grid(curr,load,g)
-R> names(xnew) <- c("current","load","thickness")
-R>   
-R> prsw <- predictreality(object=swbayes, newdesign=xnew)
-\end{CodeInput}
+\begin{Code}
+R> load <- 4; g <- 1; curr <- seq(from = 20, to = 30, length = 80)
+R> xnew <- expand.grid(current = curr, load = load, thickness = g)
+R> 
+R> set.seed(0)   
+R> prsw <- predictreality(object = swbayes, newdesign = xnew)
+\end{Code}
 
 The object \code{prsw} has slots named \code{modelpred} and
 \code{biaspred} where the draws from \eqref{real}, which we have
 denoted
-in Section~\ref{frame} by $\n y^M_i, \n b_i$, are stored. We now
+in Section~\ref{frame} by $(\n y^M_i, \n b_i)$, are stored. We now
 obtain the 
-corresponding derivatives with respect to current of each of these
+corresponding derivatives with respect to \code{current} of each of these
 draws, to finally obtain draws from the corresponding derivative of
 reality:
-\begin{CodeInput}
+\begin{Code}
 R> delta <- diff(curr)[1]
 R> model <- prsw@modelpred
 R> dmodel <- diff(t(model))/delta
@@ -753,7 +902,7 @@ R> bias <- prsw@biaspred
 R> dbias <- diff(t(bias))/delta
 R>
 R> dreal <- dmodel + dbias
-\end{CodeInput}
+\end{Code}
 These draws can be summarized by computing the corresponding mean and
 tolerance bounds as explained in Section~\ref{frame}. This is plotted
 in Figure~\ref{deriv}. 
@@ -770,29 +919,154 @@ in Figure~\ref{deriv}.
 
 Additionally, we can use \code{predictcode} to obtain draws from the
 emulator evaluated at a posterior estimate of the calibration input,
-\code{tuning}. This allows us to produce the pure-model estimate of the
+\code{tuning}, say, \code{tuning}=3.2. This allows us to produce the
+pure-model estimate of the 
 derivative:
-\begin{CodeInput}
-R> u <- 3.2; load <- 4; g <- 1; 
-R> xnewpure <- expand.grid(curr,load,g,u)
-R> names(xnewpure) <- c("current","load","thickness","tuning")
+\begin{Code}
+R> u <- 3.2; load <- 4; g <- 1; curr <- seq(from=20,to=30,length=80)
+R> xnewpure <- expand.grid(current = curr, load = load, thickness = g, 
++                          tuning = u)
 R>
-R> pmsw <- predictcode(object=swbayes,newdesign=xnewpure,n.iter=20000)
+R> set.seed(0)
+R> pmsw <- predictcode(object = swbayes, newdesign = xnewpure,
++                      n.iter = 20000)
 R>
 R> puremodel <- pmsw@samples
 R> dpuremodel <- diff(t(puremodel))/delta
-\end{CodeInput}
+\end{Code}
 The mean of the samples in \code{dpuremodel} is the pure-model prediction
 of the derivative. This is plotted in Figure~\ref{deriv}. Notice how
 the two estimates, pure-model and bias-corrected, are in this case
 even qualitatively different.
-\section*{Acknowledgements}
+\section{A simulated example}\label{synth}
+In this section, we are going to illustrate the use of the package in
+a simulated data example: model and reality are known, and so is the
+true value of the calibration parameter and of the field data
+precision. Essentially the same setup has already been utilized in
+\citet{Baya:2007} and in \citet{baya:2010} to illustrate similar
+points.
+
+In this example, we have a calibration parameter $v$ whose true value
+is fixed at $u=1.7$. The controllable input is $x$; reality is given by 
+\begin{equation}
+y^R(x)= 3.5\ \exp(-u\ x) + 1.5\ .
+\end{equation}
+The computer model is given by
+\begin{equation}
+y^M(x,v) = 5\ \exp(-v\ x)
+\end{equation}
+but we are going to treat it as we would a computationally expensive
+model: to obtain
+the model 
+data, we evaluate it at a $6\times 6$ equally-spaced grid 
+on the $(x,v)$-space, which is set at $[0,3]\times[0.5,2]$. We use
+these data, available with the package as 
+\code{synthmodel}, to produce the emulator; to load the data frame, use
+the command
+\begin{Code}
+R> data(synthmodel, package = "SAVE")
+\end{Code}
+
+
+The field data consists of 3 replicates at each point in an
+equally-spaced grid of 
+10 points for $x$ spanning the interval $[0.11,3.01]$. The measurement
+error is $\textrm{N}(0,0.3^2)$, that is $\lambda^F=1/0.3^2\approx
+11.11$. These data are also available with the package; use the
+following command to load the corresponding data frame:
+\begin{Code}
+R> data(synthfield, package = "SAVE")
+\end{Code}
+
+The \proglang{R} code to produce the \code{SAVE} object associated
+with this analysis is
+\begin{Code}
+R> synth <- SAVE(response.name = "y", controllable.names = "x",
++                calibration.names = "v", field.data = synthfield,
++                model.data = synthmodel, mean.formula = ~1+x, 
++                bestguess = list(v = 1.5))
+\end{Code}
+and the MCMC samples were obtained with
+\begin{Code}
+R > set.seed(0)
+R > synth <- bayesfit(object = synth, 
++                     prior = uniform(var.name = "v", lower = 0, 
++                     upper = 3), n.iter = 20000)
+\end{Code}
+The plot of the posterior distribution on the calibration parameter
+can be found in Figure~\ref{synthu}, and the posterior on the
+precisions is in Figure~\ref{synthprec}. Note how the posteriors
+include the true values of $v$ and $\lambda^F$. 
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.3]{synthu.pdf}
+  \caption{Posterior distribution on the calibration input for the
+    simulated example.}
+  \label{synthu}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.3]{synthprec.pdf}
+  \caption{Posterior distribution on the precisions for the
+    simulated example.}
+  \label{synthprec}
+\end{figure}
+
+We next produce the bias-corrected prediction of reality at
+an equally-spaced grid of 25 points for $x$ in the interval
+$[0.05,3.05]$. For that, we have used the code
+\begin{Code}
+R> xnew <- data.frame(x = seq(from = 0.05, to = 3.05, length = 25))
+R> valsynth <- validate(object = synth, newdesign = xnew, n.burnin = 100)
+\end{Code}
+The bias-corrected prediction of reality is the solid black line in
+Figure~\ref{synthval}. The dashed lines correspond to the tolerance
+bars, and the red solid line is the actual curve we are trying to
+estimate; the stars represent the simulated field data.
+
+Using the fact that we know $y^M$, it's easy to find the least squares
+estimate of $u$, i.e., the value of $v$ that minimizes the sum of the
+squared distance between the field observations and the model
+output. That estimate here turns out to be $\tilde{u}=0.63$. This is a
+common strategy in calibration: not including a bias 
+term. It has been argued extensively, starting with
+\citet{Kenn:OHag:2001} and \citet{Crai:1997}, that this approach
+often leads to over-fitting 
+and to unreasonable estimates for the calibration parameter. In this
+example, we again see evidence of that. In Figure~\ref{synthval}, the
+green curve corresponds the true model output evaluated at
+$\tilde{u}$. The blue curve represents the true model output evaluated
+at the posterior mean, which turns out to be $\hat{u}=1.58$. The
+inclusion of the bias prevents over-fitting and allows for a more
+reasonable estimate of the calibration parameter. Additionally, it's
+clear that the bias-corrected prediction is a much better estimate of
+the true reality curve than the pure-model prediction (computer model
+evaluated at the posterior mean) and than the computer model evaluated at
+the least squares estimate. 
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.3]{synthval.pdf}
+  \caption{Bias-corrected prediction for the simulated example. The
+    solid black line corresponds to the bias-corrected prediction, the
+    dashed lines represent the tolerance bars, and the stars are the
+    simulated field observations. The red line corresponds to the
+    actual reality curve, which is known in this case. The blue and
+    green curves correspond, respectively, to the computer model
+    evaluated at the posterior mean and at the least squares estimate
+  of the calibration parameter.}
+  \label{synthval}
+\end{figure}
+
+\section*{Acknowledgments}
 This research was funded by Portuguese National Funds through FCT - Funda\c
 c\~ao para a Ci\^encia e a Tecnologia, project PTDC/MAT/105349/2008
 and by the Spanish Ministry of Education and Science under grant
 MTM2010-19528. An initial version of this software was produced while
 the authors were postdoctoral researchers at the National Institute of
-Statistical Sciences (NISS), and at the times their research was
+Statistical Sciences (NISS), and at the time their research was
 supported in part by 
 grants from General Motors and the National Science Foundation
 (Grant DMS-0073952). M.J. Bayarri (Valencia), James O.\ Berger (Duke),
@@ -807,9 +1081,9 @@ covariance functions governed by unknown parameters
 $\n{\theta}^L$ and $\n{\theta}^M=(\lambda^M, \n{\alpha}^M,
 \n{\beta}^M)$, respectively. The mean function of the Gaussian process
 is assumed to be of the 
-form $\n{\Psi}'(\n{\cdot})\n{\theta}^L$ where
+form $\n{\Psi}^\top(\n{\cdot})\n{\theta}^L$ where
 $\n{\Psi}(\n{z})$ is a specified  $k \times 1$ vector
-function of the input $\n{z}=(\n x, \n u)$ and $\n{\theta}^L$ is a $k
+function of the input $\n{z}=(\n x, \n v)$ and $\n{\theta}^L$ is a $k
 \times 1$ vector of unknown regression parameters. This mean function
 is specified through the argument \code{mean.formula} of the
 \code{SAVE} function. Note that one of the restrictions of \ourpack\
@@ -825,28 +1099,30 @@ c^M(\n{z},\n{z^{\star}})
 =\exp\left(-\sum_{j=1}^d\beta^M_j |
 z_j-{z_j}^{\star}|^{\alpha_j^M}\right).
 \end{equation*}
-Here, $d$ is the number of coordinates in $\n{z}=(\n x,\n u)$,
+Here, $d$ is the number of coordinates in $\n{z}=(\n x,\n v)$,
 the $\alpha^M_j$ are numbers between 0 and 2, and the $\beta^M_j$ are
 positive parameters.
 
 After observing $\n y^M$, the conditional posterior distribution
 of $y^M$ given the hyperparameters, $f(y^M(\cdot) \mid \n{y}^M,
 \n{\theta}^L,\n{\theta}^M)$, is a Gaussian process with
-updated mean and covariance functions given respectively
-\begin{align*}
+updated mean and covariance functions given respectively by
+\begin{align}
 & \E[y^M(\n{z}) \mid \n{y}^M,
-\n{\theta}^L, \n{\theta}^M] =\n{\Psi}'(\n{z}) \,
+\n{\theta}^L, \n{\theta}^M] =\n{\Psi}^\top(\n{z}) \,
 \n{\theta}^L +
-{\n{r}_z}'(\n{\Gamma}^M)^{-1}(\n{y}^M-\n{X}\n{\theta}^L)\\
+\n{r}_z^\top(\n{\Gamma}^M)^{-1}(\n{y}^M-\n{X}\n{\theta}^L) \label{meanapp}\\
 &\COV[\, y^M(\n{z}), y^M(\n{z}^{\star})
 \mid \n{y}^M, \n{\theta}^L, \n{\theta}^M] =
 \frac{1}{\lambda^M} \, c^M(\n{z},\n{z}^{\star}) -
-{\n{r}_z}'(\n{\Gamma}^M)^{-1}\n{r}_{z^{\star}},
-\end{align*}
-where ${\n{r}_z}' = \frac{1}{\lambda^M} \ (c^M(\n{z},
-\n{z}_1),\ldots,c^M(\n{z},\n{z}_N))$, $\n{\Gamma}^M$ is
-given above and $\n{X}$ is the matrix
-with rows $\n{\Psi}'(\n{z}_1),\ldots, \n{\Psi}'(\n{z}_N)$. 
+\n{r}_z^\top(\n{\Gamma}^M)^{-1}\n{r}_{z^{\star}},
+\end{align}
+where $\n{r}_z^\top = \frac{1}{\lambda^M} \ (c^M(\n{z},
+\n{z}_1),\ldots,c^M(\n{z},\n{z}_N))$,
+$\n{X}$ is the matrix 
+with rows $\n{\Psi}^\top(\n{z}_1),\ldots, \n{\Psi}^\top(\n{z}_N)$, and
+$\n{\Gamma}^M$ is
+a matrix with $(i,j)$ entry given by $c^M(\n{z}_i,\n{z}_j)/\lambda^M$
 
 To obtain an emulator for
 $y^M$, we replace in the formulae above the unknown parameter values by the
@@ -876,14 +1152,13 @@ $\n\theta^F=(\lambda^b$, $\n \beta^b$, $\lambda^F)$, and we do so in a
 nearly automatic 
 fashion as follows: we start by selecting a best guess for the vector
 of calibration parameters, denoted by $\tilde{\n u}$, which is the
-argument 
-\code{bestguess} is function \code{SAVE}. Then, using the
+argument \code{bestguess} in function \code{SAVE}. Then, using the
 emulator, we predict the output of the computer model at
-$D^F_{\scriptsize \tilde{\n u}}$, denoted $y^M(D^F_{\scriptsize
-  \tilde{\n u}})$. Next, treat $\n y^F-y^M(D^F_{\scriptsize
+$D^F_{\scriptsize \tilde{\n u}}$, denoted $\n y^M(D^F_{\scriptsize
+  \tilde{\n u}})$. Next, treat $\n y^F-\n y^M(D^F_{\scriptsize
   \tilde{\n u}})$ as a realization of a Gaussian process with a
 nugget, namely as a realization of a multivariate normal with mean
-zero and covariance matrix $c^b(D^F)/\lambda^b+I/\lambda^F$ to get
+zero and covariance matrix $c^b(D^F)/\lambda^b+I/\lambda^F$, to get
 maximum likelihood estimates $\hat{\lambda}^b$, $\hat{\n \beta}^b$,
 $\hat{\lambda}^F$. Then,
 \begin{itemize}
@@ -934,11 +1209,13 @@ the user needs to decide on three aspects:
   method. If \code{method=1}, these vectors are not integrated out.
 \end{itemize}
 
+
+%\bibliography{/Users/gonzalogarcia-donato/Mywork/bibliografia/Computermodels,
+%/Users/gonzalogarcia-donato/Mywork/bibliografia/biblio}
 \bibliography{Computermodels,biblio} 
  
 
 \end{document}
-
 
 Before we can run these computer models, we have to
 specify a vector of inputs which typically includes calibration

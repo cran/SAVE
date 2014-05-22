@@ -333,16 +333,16 @@ void bayesfit(int *FlagOutput,int *P, int *PSTAR, int *Q, int *nm, int *nf,
   double u = 0.0; /* uniform draw */
 
   fF=fopen(fileF,"w"); // this is just to clear the file
-  fprintf(fF,"");
+  fprintf(fF,"%s","");
 
   if(pstar!=0){
     fcal=fopen(fileU,"w"); // this is just to clear the file
-    fprintf(fcal,"");
+    fprintf(fcal,"%s","");
     fclose(fcal);
   }
    
   fcal=fopen(filepath,"w"); // this is just to clear the file
-  fprintf(fcal,"");
+  fprintf(fcal,"%s","");
   fclose(fcal);
 
   //###########

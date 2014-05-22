@@ -12,7 +12,9 @@ data(spotweldmodel,package='SAVE')
 # compute the corresponding mle estimates
 ##############
 
-sw <- SAVE(response.name="diameter", controllable.names=c("current", "load", "thickness"), calibration.names=c("tuning"), field.data=spotweldfield, model.data=spotweldmodel, mean.formula=~1), bestguess=list(t=4.0))
+sw <- SAVE(response.name="diameter", controllable.names=c("current", "load", "thickness"), 
+			calibration.names=c("tuning"), field.data=spotweldfield, model.data=spotweldmodel,
+			mean.formula=~1, bestguess=list(tuning=4.0))
 
 # summary of the results
 
@@ -44,7 +46,7 @@ curr <- seq(from=20,to=30,length=20)
 g <- c(1,2)
 
 xnew <- as.data.frame(expand.grid(curr,aload,g))
-names(xnew)<-c("current”,"load”,"tuning")
+names(xnew)<-c("current","load","tuning")
 
 valsw <- validate(object=sw,newdesign=xnew,n.burnin=100)
 
@@ -66,7 +68,7 @@ for(i in 1:2){
 				xlab="current",ylab="weld diameter")
 		lines(curr,av[v]+tau[v],lty=3)
 		lines(curr,av[v]-tau[v],lty=3)
-		text(22,9,paste("g=",g[i],", L=“,aload[j],sep=""),cex=0.8,pos=1)
+		text(22,9,paste("g=",g[i],", L=",aload[j],sep=""),cex=0.8,pos=1)
 		# field data that correspond to this situation
 		v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
 		data <- spotweldfield$N[v]
@@ -115,7 +117,7 @@ for(i in 1:2){
     lines(curr,meanpure[v]+qtspure[v],lty=1,col=2)
     lines(curr,meanpure[v]-qtspure[v],lty=1,col=2)
     text(22,9,paste("gauge= ",g[i],", 
-    aload=“,aload[j],sep=""),cex=0.8,pos=1)
+    aload=",aload[j],sep=""),cex=0.8,pos=1)
     # simulation-based
     lines(curr,avpure[v],type="l",col=1,lty=3)
     lines(curr,qts[1,v],lty=3,col=1)
@@ -165,7 +167,7 @@ for(i in 1:2){
     lines(curr,av[v]+tau.real[v],lty=3)
     lines(curr,av[v]-tau.real[v],lty=3)
     text(22,9,paste("gauge= ",g[i],", 
-    aload=“,aload[j],sep=""),cex=0.8,pos=1)
+    aload=",aload[j],sep=""),cex=0.8,pos=1)
     # field data that correspond to this situation
     v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
     data <- spotweldfield$N[v]
@@ -198,7 +200,7 @@ for(i in 1:2){
         lines(curr,avpure[v]+tau.pure[v],lty=3)
         lines(curr,avpure[v]-tau.pure[v],lty=3)
 		text(22,9,paste("gauge= ",g[i],", 
-						aload=“,aload[j],sep=""),cex=0.8,pos=1)
+						aload=",aload[j],sep=""),cex=0.8,pos=1)
 # field data that correspond to this situation
 		v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
 		data <- spotweldfield$N[v]
@@ -231,7 +233,7 @@ for(i in 1:2){
 			 xlab="current",ylab="weld diameter")
         lines(curr,avpure[v]+tau.pure[v],lty=3)
         lines(curr,avpure[v]-tau.pure[v],lty=3)
-        title(main=paste("thickness=",g[i],", load=“,aload[j],sep=""),cex=0.8)
+        title(main=paste("thickness=",g[i],", load=",aload[j],sep=""),cex=0.8)
 		
 		# field data that correspond to this situation
 		v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)

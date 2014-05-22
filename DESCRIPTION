@@ -2,8 +2,8 @@ Package: SAVE
 Type: Package
 Title: Bayesian emulation, calibration and validation of computer
         models
-Version: 0.9.3.8.4
-Date: 2014-01-22
+Version: 0.9.3.9.2
+Date: 2014-05-22
 Authors@R: c(person(given="Jesus",family="Palomo", role=c("aut",
         "cre"),email="jesus.palomo@urjc.es"),
         person(given="Gonzalo",family="Garcia-Donato",
@@ -16,7 +16,7 @@ Authors@R: c(person(given="Jesus",family="Palomo", role=c("aut",
         person(given="Jerome",family="Sacks",
         role="ctb",email="sacks@niss.org"))
 Imports: coda, DiceKriging, methods
-Packaged: 2014-01-22 16:37:45 UTC; rlda
+Packaged: 2014-05-28 18:17:46 UTC; rlda
 Suggests: MASS
 Description: Implements Bayesian statistical methodology for the 
 		analysis of complex computer models.
@@ -27,7 +27,7 @@ URL: http://vangogh.fcjs.urjc.es/~jesus/SAVE,
         http://vangogh.fcjs.urjc.es/~jesus
 BugReports:
 Repository: CRAN
-Date/Publication: 2014-01-22 17:54:24
+Date/Publication: 2014-05-28 23:49:08
 Author: Jesus Palomo [aut, cre],
   Gonzalo Garcia-Donato [aut],
   Rui Paulo [aut],

@@ -14,6 +14,7 @@ Objects of this class are created and initialized with the function \code{\link{
     \item{\code{responsename}:}{Object of class \code{character}. The response name.}
     \item{\code{controllablenames}:}{Object of class \code{character}. The names of the controllable inputs.}
     \item{\code{calibrationnames}:}{Object of class \code{character}. The names of the calibration inputs.}
+    \item{\code{constant.controllables}:}{Object of class \code{logical}. Controls whether or not the analysis has constant controllable inputs.}
     \item{\code{df}:}{Object of class \code{matrix}. The field design once the replicates (if any) have been removed.}
     \item{\code{dm}:}{Object of class \code{matrix}. The model design.}
     \item{\code{ym}:}{Object of class \code{numeric}. Model response associated with dm.}

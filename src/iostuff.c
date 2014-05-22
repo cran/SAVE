@@ -443,6 +443,7 @@ void iprintvec(int *v, int n)
  for(int i=0;i<n;i++) {
      Rprintf("%d ",v[i]);
  }
+ Rprintf("\n");
 }
 
 int ireadvec(char file[], int *v, int n) 

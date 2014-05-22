@@ -3,7 +3,9 @@
  *  R_Package
  *
  *  Created by Jesus Palomo on 9/10/12.
- *  Copyright 2012 __MyCompanyName__. All rights reserved.
+ *  Copyright (C) 2013-present Jesus Palomo, Gonzalo Garcia-Donato,
+ *							  and Rui Paulo
+ *  All rights reserved.
  *
  */
 
@@ -24,24 +26,22 @@ void bayesfitSetupCalib(int screen, char home[], double multmle, int p, int q, i
 				   char **fileU, char **frateU)
 {
 	if (screen != 0){
-		Rprintf("\n--- Entra en bayesfitSetup ---\n");
+		Rprintf("\n--- Entra en bayesfitSetupCalib ---\n");
 		Rprintf("Home is: %s\n",home);
 	}
 
 	// FILENAMES
 	char strtmp[100];
-	if (screen != 0) Rprintf("strtmp is: %s\n",strtmp);
 	
 	/* file where sequence of thetaF goes */
 	char afileF [100];
-	if (screen != 0) Rprintf("FileF is: %s\n",*fileF);
 	strcpy(strtmp,home);
 	strcat(strtmp,"thetaF.out");
 	if (screen != 0) Rprintf("strtmp is: %s\n",strtmp);
 	strcpy(afileF,strtmp);
 	*fileF = malloc(sizeof(afileF));
 	memcpy(*fileF, afileF, sizeof(afileF));
-	if (screen != 0) Rprintf("FileF is: %s\n",fileF);
+	if (screen != 0) Rprintf("FileF is: %s\n",*fileF);
 	
 	/* file where sequence of (yM*,b) goes */
 	char afilepath [100];
@@ -246,14 +246,12 @@ void bayesfitSetup(int screen, char home[], double multmle, int p, int q, int ps
 	}
 	// FILENAMES
 	char strtmp[100];
-	//Rprintf("strtmp is: %s\n",strtmp);
 	
 	/* file where sequence of thetaF goes */
 	char afileF [100];
-	//Rprintf("FileF is: %s\n",*fileF);
 	strcpy(strtmp,home);
 	strcat(strtmp,"thetaF.out");
-	//Rprintf("strtmp is: %s\n",strtmp);
+	if (screen != 0) Rprintf("strtmp is: %s\n",strtmp);
 	strcpy(afileF,strtmp);
 	*fileF = malloc(sizeof(afileF));
 	memcpy(*fileF, afileF, sizeof(afileF));
@@ -296,30 +294,38 @@ void bayesfitSetup(int screen, char home[], double multmle, int p, int q, int ps
 
 	////////////////////////////////////////////////////////
 	// READ MLE OF THETAF
-	*thetaF = get_mlethetaF(home,pcont);	
+	*thetaF = get_mlethetaF(home,pcont);
+	if (screen != 0) Rprintf("thetaF read\n");
 	// READ MLE OF THETAM
-	*thetaM = get_mlethetaF(home,p);
+	*thetaM = get_mlethetaM(home,p);
+	if (screen != 0) Rprintf("thetaM read\n");
 	// READ MLE OF THETAL
 	*thetaL= get_mlethetaL(home,q);
+	if (screen != 0) Rprintf("thetaL read\n");
+    
 	
 	//PRIORS
 	*priorshapes=dvector(0,pcont+2);
+	if (screen != 0) Rprintf("priorshapes set\n");
 	*prioriscales=dvector(0,pcont+2);
-	
+    
 	for(i=0;i<pcont+2;i++) (*priorshapes)[i]=1.;
-	
-	for(i=0;i<pcont+1;i++){
-		(*prioriscales)[i]=(*thetaF)[i];
-	}
+    
+    for(i=0;i<pcont+1;i++){
+        (*prioriscales)[i]=(*thetaF)[i];
+    }
 	(*prioriscales)[pcont+1]=(*thetaF)[2*(pcont)+1];
-	
+
+    
 	int k=pcont+2;
 	int one=1;
 	dscal_(&k,&multmle,&*prioriscales[0],&one);
 	for(i=0;i<pcont+2;i++)
 		(*prioriscales)[i]=1./(*prioriscales)[i];
-	
+	if (screen != 0) Rprintf("priorscales set\n");
+    
 	*Nrep = get_inputsrep(home, NF);
+    if (screen != 0) Rprintf("Nrep read\n");
 
 	//READ/CONSTRUCT DATA
 	int N;       /* NM+NF */
@@ -331,8 +337,10 @@ void bayesfitSetup(int screen, char home[], double multmle, int p, int q, int ps
 	for(i=0;i<NF;i++){
 		*NFtot = *NFtot+(*Nrep)[i];
 	}
-
+	if (screen != 0) Rprintf("NFtot set\n");
+    
 	*yM = get_datacode(home,NM);
+   	if (screen != 0) Rprintf("yM read\n");
 
 	*yF = get_datafield_s2F(home,*Nrep, NF,&*s2F); /* raw field data */
 	if (screen != 0) Rprintf("yF read\n");
@@ -340,10 +348,13 @@ void bayesfitSetup(int screen, char home[], double multmle, int p, int q, int ps
 	*y = dvector(0,N);
 	dcopy_(&NM,&(*yM)[0],&one,&(*y)[0],&one);
 	dcopy_(&NF,&(*yF)[0],&one,&(*y)[NM],&one);
+	if (screen != 0) Rprintf("y set\n");
 	
 	*ZM = get_inputscode(home,NM,p); /* read model design set */
+	if (screen != 0) Rprintf("ZM read\n");
 	
 	*ZF = get_inputsfield(home, NF, pcont); /* read field design set */
+	if (screen != 0) Rprintf("ZF read\n");
 	
 	//CONSTRUCT GLOBAL DESIGN SET
 	*Z=darray2(p,N);
@@ -361,12 +372,14 @@ void bayesfitSetup(int screen, char home[], double multmle, int p, int q, int ps
 	for(i=p-pstar;i<p;i++){
 		dcopy_(&NM,(*ZM)[i],&one,(*Z)[i],&one);
 	}
+   	if (screen != 0) Rprintf("Z set\n");
 	/* missing in Z are the values for the calibration parameters, 
 	 if they exist */
 	
 	// CONSTRUCT GLOBAL DESIGN MATRIX
 	
 	*X=get_designMatrix(home, NF, NM,q);
+   	if (screen != 0) Rprintf("X read\n");
 	*Xt=darray2(q,N);
 	
 	for(i=0;i<N;i++){
@@ -374,7 +387,8 @@ void bayesfitSetup(int screen, char home[], double multmle, int p, int q, int ps
 			(*Xt)[j][i]=(*X)[i][j];
 		}
 	}
-	
+	if (screen != 0) Rprintf("Xt set\n");
+
 	if (screen !=0){
 		Rprintf("ThetaF is:\n");
 		dprintvec(*thetaF, 2*(pcont)+2);
