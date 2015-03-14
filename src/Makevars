@@ -32,5 +32,5 @@ HEADERS = \
         predict_reality.h predict_code.h\
 	setup.h chol_pivot.h optimize.h
 
-PKG_LIBS = $(LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
 

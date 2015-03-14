@@ -23,7 +23,7 @@ summary(sw)
 ##############
 # obtain the posterior distribution of the unknown parameters 
 ##############
-
+set.seed(0)
 sw <- bayesfit(object=sw, prior=c(uniform("tuning", upper=8, lower=0.8)), n.iter=20000, n.burnin=100, n.thin=2)
 
 # summary of the results
@@ -45,10 +45,10 @@ aload <- c(4.0,5.3)
 curr <- seq(from=20,to=30,length=20)
 g <- c(1,2)
 
-xnew <- as.data.frame(expand.grid(curr,aload,g))
-names(xnew)<-c("current","load","tuning")
+xnew <- expand.grid(current = curr, load = load, thickness = g)
 
-valsw <- validate(object=sw,newdesign=xnew,n.burnin=100)
+set.seed(0)
+valsw <- validate(object=sw,newdesign=xnew,calibration.value='mean',n.burnin=100)
 
 # summary of results
 summary(valsw)
@@ -60,25 +60,24 @@ plot(valsw)
 av <- (valsw@validate)[,"pure.model"]
 tau <- (valsw@validate)[,"tau.pm"] 
 
-par(oma=c(1,1,2,0),mfrow=c(2,2))
-for(i in 1:2){
-	for(j in 1:2){
-		v <- ((i-1)*40+(j-1)*20+1):((i-1)*40+j*20)
-		plot(curr,av[v],type="l",ylim=c(3,9),
-				xlab="current",ylab="weld diameter")
-		lines(curr,av[v]+tau[v],lty=3)
-		lines(curr,av[v]-tau[v],lty=3)
-		text(22,9,paste("g=",g[i],", L=",aload[j],sep=""),cex=0.8,pos=1)
-		# field data that correspond to this situation
-		v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
-		data <- spotweldfield$N[v]
-		inputs <- spotweldfield$C[v]
-		points(inputs,data)
-		#dev.off()
-	}
+par(oma = c(1, 1, 2, 0), mfrow = c(2, 2))
+for (i in 1:2) {
+  for (j in 1:2) {
+    v <- ((i - 1) * 40 + (j - 1) * 20 + 1):((i - 1) * 40 + j * 20)
+    plot(curr, av[v], type = "l", ylim = c(3, 9), xlab = "current", ylab = "weld diameter")
+    lines(curr, av[v] + tau[v], lty = 3)
+    lines(curr, av[v] - tau[v], lty = 3)
+    text(22, 9, paste("thickness=", g[i], ", load=", load[j], sep = ""), cex = 0.8, 
+         pos = 1)
+    # field data that correspond to this situation
+    v <- ((i - 1) * 60 + (j - 1) * 30 + 1):((i - 1) * 60 + j * 30)
+    data <- spotweldfield$diameter[v]
+    inputs <- spotweldfield$current[v]
+    points(inputs, data)
+  }
 }
-mtext("Pure-model predictions",side=3,
-		outer=T,cex=1.2)
+mtext("Pure-model predictions", side = 3, outer = T, cex = 1.2)
+par(mfrow = c(1, 1))
 
 ##########
 # emulate the output of the model using predictcode
@@ -95,6 +94,7 @@ xnewpure <- cbind(xnewpure,rep(u,dim(xnewpure)[1]))
 names(xnewpure) <- c("current","load","thickness","tuning")
 xnewpure <- as.data.frame(xnewpure)
 
+set.seed(0)
 pcsw<- predictcode(object=sw, newdesign=xnewpure, n.iter=20000, tol=1.E-12)
 
 # Plot results
@@ -140,6 +140,7 @@ xnew <- as.data.frame(expand.grid(curr,aload,g))
 names(xnew)<-c("current","load","thickness")
 
 # Obtain samples
+set.seed(0)
 prsw <- predictreality(object=sw, newdesign=xnew, tol=1.E-12)
 
 # Plot results
@@ -170,8 +171,8 @@ for(i in 1:2){
     aload=",aload[j],sep=""),cex=0.8,pos=1)
     # field data that correspond to this situation
     v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
-    data <- spotweldfield$N[v]
-    inputs <- spotweldfield$C[v]
+    data <- spotweldfield$diameter[v]
+    inputs <- spotweldfield$current[v]
     points(inputs,data)
     #dev.off()
   }
@@ -199,12 +200,11 @@ for(i in 1:2){
 			 xlab="current",ylab="weld diameter")
         lines(curr,avpure[v]+tau.pure[v],lty=3)
         lines(curr,avpure[v]-tau.pure[v],lty=3)
-		text(22,9,paste("gauge= ",g[i],", 
-						aload=",aload[j],sep=""),cex=0.8,pos=1)
+		text(22,9,paste("gauge= ",g[i],", aload=",aload[j],sep=""),cex=0.8,pos=1)
 # field data that correspond to this situation
 		v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
-		data <- spotweldfield$N[v]
-		inputs <- spotweldfield$C[v]
+		data <- spotweldfield$diameter[v]
+		inputs <- spotweldfield$current[v]
 		points(inputs,data)
 #dev.off()
 	}
@@ -237,8 +237,8 @@ for(i in 1:2){
 		
 		# field data that correspond to this situation
 		v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
-		data <- spotweldfield$N[v]
-		inputs <- spotweldfield$C[v]
+		data <- spotweldfield$diameter[v]
+		inputs <- spotweldfield$current[v]
 		points(inputs,data)
 #dev.off()
 	}
@@ -264,8 +264,8 @@ for(i in 1:2){
 		
 # field data that correspond to this situation
 		v <- ((i-1)*60+(j-1)*30+1):((i-1)*60+j*30)
-		data <- spotweldfield$N[v]
-		inputs <- spotweldfield$C[v]
+		data <- spotweldfield$diameter[v]
+		inputs <- spotweldfield$current[v]
 		points(inputs,data)
 	}
 }
@@ -283,28 +283,31 @@ xnew <- expand.grid(curr,aload,g)
 names(xnew)<-c("current","load","thickness")
 
 # Obtain samples
+set.seed(0)
 prdersw <- predictreality(object=sw, newdesign=xnew, tol=1.E-12)
 
+delta <- diff(curr)[1]
 model <- prdersw@modelpred
-dmodel <- diff(t(model))/diff(curr)[1]
-
+dmodel <- diff(t(model))/delta
 bias <- prdersw@biaspred
-dbias <- diff(t(bias))/diff(curr)[1]
+dbias <- diff(t(bias))/delta
+dreal <- dmodel + dbias
 
-dreal <- dmodel+dbias
-
-dav <- apply(dreal,1,mean)
+# bias-corrected prediction
+dav <- apply(dreal, 1, mean)
 
 # tolerance bounds
-tmpdata <- matrix(dav,ncol=dim(dreal)[2],nrow=dim(dreal)[1],
-		byrow=F)
+tmpdata <- matrix(dav, ncol = dim(dreal)[2], nrow = dim(dreal)[1], byrow = F)
 tmpdata <- dreal - tmpdata
 tmpdata <- abs(tmpdata)
-tau.real <- apply(tmpdata,1,quantile,0.90)
+tau.real <- apply(tmpdata, 1, quantile, 0.9)
 
-plot(curr[-1],dav,ty="l",ylim=c(min(dav-tau.real),max(dav+tau.real)))
+par(mfrow=c(1,1))
+plot(curr[-1],dav,ty="l",ylim=c(min(dav-tau.real),max(dav+tau.real)),
+     xlab="current",ylab="derivative")
 lines(curr[-1],dav+tau.real,lty=2)
 lines(curr[-1],dav-tau.real,lty=2)
+title(main='Bias-corrected prediction of the derivative')
 
 # pure-model prediction
 
@@ -317,6 +320,7 @@ xnewpure <- expand.grid(curr,aload,g,u)
 names(xnewpure) <- c("current","load","thickness","tuning")
 xnewpure <- as.data.frame(xnewpure)
 
+set.seed(0)
 pcdersw <- predictcode(object=sw, newdesign=xnewpure, n.iter=20000, tol=1.E-12)
 
 samples <- pcdersw@samples
@@ -326,9 +330,11 @@ dpureup <- apply(dersamples,1,quantile,0.975)
 dpurelow <- apply(dersamples,1,quantile,0.025)
 
 
-plot(curr[-1],dpure,ty="l",ylim=c(min(dpurelow),max(dpureup)))
+plot(curr[-1],dpure,ty="l",ylim=c(min(dpurelow),max(dpureup)),
+     xlab="current",ylab="derivative")
 lines(curr[-1],dpureup,col=2)
 lines(curr[-1],dpurelow,col=2)
+title(main='Pure-mdoel prediction of the derivative')
 
 # plot
 #pdf(file="deriv.pdf")
@@ -337,4 +343,5 @@ plot(curr[-1],dav,ty="l",ylim=c(min(dav-tau.real),
 lines(curr[-1],dav+tau.real,lty=2)
 lines(curr[-1],dav-tau.real,lty=2)
 lines(curr[-1],dpure,lty=4,lwd=2)
+title(main='Bias-corrected and pure-morel prediction of the derivative')
 #dev.off()
